@@ -2243,19 +2243,18 @@
         }
       }
 
-
       // Печать/сохранение отчёта
       function generatePDF() {
         console.log("=== Подготовка к печати ===");
 
         // Скрываем навигацию и кнопки
-        const nav = document.querySelector('.nav');
-        const progress = document.querySelector('.progress-container');
-        const buttons = document.querySelectorAll('.button-container');
+        const nav = document.querySelector(".nav");
+        const progress = document.querySelector(".progress-container");
+        const buttons = document.querySelectorAll(".button-container");
 
-        if (nav) nav.style.display = 'none';
-        if (progress) progress.style.display = 'none';
-        buttons.forEach(btn => btn.style.display = 'none');
+        if (nav) nav.style.display = "none";
+        if (progress) progress.style.display = "none";
+        buttons.forEach((btn) => (btn.style.display = "none"));
 
         console.log("Ненужные элементы скрыты");
 
@@ -2266,9 +2265,9 @@
 
         // Восстанавливаем элементы через 2 секунды
         setTimeout(() => {
-          if (nav) nav.style.display = '';
-          if (progress) progress.style.display = '';
-          buttons.forEach(btn => btn.style.display = '');
+          if (nav) nav.style.display = "";
+          if (progress) progress.style.display = "";
+          buttons.forEach((btn) => (btn.style.display = ""));
           console.log("Элементы восстановлены");
         }, 2000);
       }
