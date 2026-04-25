@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Простой тест PDF</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+        max-width: 800px;
+        margin: 0 auto;
+      }
+      .test-content {
+        background: white;
+        padding: 20px;
+        border: 2px solid #667eea;
+        border-radius: 10px;
+        margin: 20px 0;
+      }
+      .btn {
+        padding: 15px 30px;
+        background: #667eea;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        font-size: 18px;
+        cursor: pointer;
+      }
+      .btn:hover {
+        background: #5568d3;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🧪 Простой тест генерации PDF</h1>
+    <p>Эта страница проверяет что html2pdf.js работает корректно</p>
+
+    <button class="btn" onclick="testSimplePDF()">Тест 1: Простой текст</button>
+    <button class="btn" onclick="testStyledPDF()">
+      Тест 2: Стилизованный контент
+    </button>
+
+    <div id="test1" class="test-content" style="display: none">
+      <h1>СпектраМаяк - Тестовый отчёт</h1>
+      <p>
+        <strong>Дата:</strong>
+        <script>
+          document.write(new Date().toLocaleDateString("ru-RU"));
+        </script>
+      </p>
+      <h2>Тестовый ребёнок</h2>
+      <p>Возраст: 3 года</p>
+      <p>Пол: Мужской</p>
+      <hr />
+      <h2>Результаты тестирования</h2>
+      <p>Это простой тестовый текст для проверки генерации PDF.</p>
+      <p>
+        Если этот PDF скачивается и содержит текст - значит библиотека работает!
+      </p>
+    </div>
+
+    <div id="test2" class="test-content" style="display: none">
+      <div
+        style="
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+          padding: 30px;
+          text-align: center;
+          border-radius: 10px;
+        "
+      >
+        <h1 style="margin: 0">СпектраМаяк</h1>
+        <p style="margin: 10px 0 0 0; opacity: 0.9">
+          Комплексная диагностика РАС
+        </p>
+      </div>
+
+      <div
+        style="
+          background: #f8f9fa;
+          padding: 20px;
+          margin: 20px 0;
+          border-left: 5px solid #667eea;
+          border-radius: 8px;
+        "
+      >
+        <h2 style="color: #667eea">Информация о ребёнке</h2>
+        <p><strong>ФИО:</strong> Тестовый ребёнок</p>
+        <p><strong>Возраст:</strong> 3 года 6 месяцев</p>
+        <p><strong>Пол:</strong> Мужской</p>
+        <p><strong>Диагноз:</strong> F84.0 - Детский аутизм</p>
+      </div>
+
+      <div
+        style="
+          background: #fff5f5;
+          padding: 20px;
+          margin: 20px 0;
+          border-left: 5px solid #e74c3c;
+          border-radius: 8px;
+        "
+      >
+        <h3 style="color: #e74c3c">M-CHAT-R: Скрининг аутизма</h3>
+        <p style="font-size: 24px; font-weight: bold; color: #667eea">
+          Высокий риск
+        </p>
+        <p>5/20 вопросов указывают на риск РАС</p>
+      </div>
+
+      <div
+        style="
+          background: #e8f4f8;
+          padding: 20px;
+          margin: 20px 0;
+          border-left: 4px solid #3498db;
+          border-radius: 8px;
+        "
+      >
+        <h3 style="color: #2980b9">Рекомендация</h3>
+        <p>
+          Необходимо проведение углублённой диагностики ADOS-2 и консультация
+          детского психиатра.
+        </p>
+      </div>
+    </div>
+
+    <div
+      id="log"
+      style="
+        background: #f0f0f0;
+        padding: 10px;
+        margin: 20px 0;
+        border-radius: 5px;
+        font-family: monospace;
+        font-size: 12px;
+        min-height: 100px;
+      "
+    ></div>
+
+    <script>
+      function log(msg) {
+        const logDiv = document.getElementById("log");
+        logDiv.innerHTML +=
+          new Date().toLocaleTimeString() + ": " + msg + "<br>";
+        console.log(msg);
+      }
+
+      function testSimplePDF() {
+        log("=== Тест 1: Простой текст ===");
+        const element = document.getElementById("test1");
+        element.style.display = "block";
+
+        log("Элемент показан");
+
+        const opt = {
+          margin: 10,
+          filename: "test1_simple.pdf",
+          image: { type: "jpeg", quality: 0.98 },
+          html2canvas: { scale: 2, logging: true },
+          jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+        };
+
+        log("Начинаю генерацию PDF...");
+
+        html2pdf()
+          .set(opt)
+          .from(element)
+          .save()
+          .then(() => {
+            log("✅ PDF успешно создан!");
+            element.style.display = "none";
+            alert("✅ Тест 1 пройден! PDF должен был скачаться.");
+          })
+          .catch((err) => {
+            log("❌ Ошибка: " + err.message);
+            element.style.display = "none";
+            alert("❌ Ошибка: " + err.message);
+          });
+      }
+
+      function testStyledPDF() {
+        log("=== Тест 2: Стилизованный контент ===");
+        const element = document.getElementById("test2");
+        element.style.display = "block";
+
+        log("Элемент показан");
+
+        const opt = {
+          margin: 10,
+          filename: "test2_styled.pdf",
+          image: { type: "jpeg", quality: 0.98 },
+          html2canvas: { scale: 2, logging: true },
+          jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+        };
+
+        log("Начинаю генерацию PDF...");
+
+        html2pdf()
+          .set(opt)
+          .from(element)
+          .save()
+          .then(() => {
+            log("✅ PDF успешно создан!");
+            element.style.display = "none";
+            alert(
+              "✅ Тест 2 пройден! Проверьте скачанный PDF - он должен содержать стилизованные блоки.",
+            );
+          })
+          .catch((err) => {
+            log("❌ Ошибка: " + err.message);
+            element.style.display = "none";
+            alert("❌ Ошибка: " + err.message);
+          });
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,2280 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>СпектраМаяк - Диагностика РАС</title>
+
+    <!-- Подключение html2pdf.js для генерации PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <!-- Подключение данных методик -->
+    <script src="methods-data.js"></script>
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Arial", sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: #f5f5f5;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+      }
+
+      .header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        text-align: center;
+      }
+
+      .header h1 {
+        font-size: 2em;
+        margin-bottom: 10px;
+      }
+
+      .header p {
+        opacity: 0.9;
+      }
+
+      /* Progress Bar */
+      .progress-container {
+        background: #e0e0e0;
+        height: 8px;
+        width: 100%;
+      }
+
+      .progress-bar {
+        background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+        height: 100%;
+        width: 0%;
+        transition: width 0.3s ease;
+      }
+
+      /* Navigation */
+      .nav {
+        display: flex;
+        background: #f8f9fa;
+        padding: 15px 30px;
+        gap: 10px;
+        overflow-x: auto;
+        border-bottom: 2px solid #e0e0e0;
+      }
+
+      .nav-btn {
+        padding: 8px 16px;
+        background: white;
+        border: 2px solid #667eea;
+        border-radius: 20px;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: all 0.3s ease;
+        font-size: 14px;
+      }
+
+      .nav-btn:hover {
+        background: #667eea;
+        color: white;
+      }
+
+      .nav-btn.active {
+        background: #667eea;
+        color: white;
+      }
+
+      /* Sections */
+      .section {
+        display: none;
+        padding: 30px;
+      }
+
+      .section.active {
+        display: block;
+      }
+
+      .section-title {
+        color: #667eea;
+        font-size: 1.5em;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #667eea;
+      }
+
+      .section-description {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        border-left: 4px solid #667eea;
+      }
+
+      /* Form Elements */
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      .form-label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: bold;
+        color: #555;
+      }
+
+      .form-input {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #e0e0e0;
+        border-radius: 8px;
+        font-size: 16px;
+        transition: border-color 0.3s ease;
+      }
+
+      .form-input:focus {
+        outline: none;
+        border-color: #667eea;
+      }
+
+      textarea.form-input {
+        min-height: 100px;
+        resize: vertical;
+      }
+
+      /* Questions */
+      .question {
+        background: #f8f9fa;
+        padding: 20px;
+        margin-bottom: 15px;
+        border-radius: 8px;
+        border-left: 4px solid #667eea;
+      }
+
+      .question.critical {
+        border-left-color: #e74c3c;
+        background: #fff5f5;
+      }
+
+      .question-header {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+
+      .question-number {
+        background: #667eea;
+        color: white;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        flex-shrink: 0;
+      }
+
+      .question.critical .question-number {
+        background: #e74c3c;
+      }
+
+      .question-text {
+        flex: 1;
+        font-weight: 500;
+        margin-bottom: 8px;
+      }
+
+      .question-hint {
+        font-size: 0.9em;
+        color: #666;
+        font-style: italic;
+        background: white;
+        padding: 8px 12px;
+        border-radius: 6px;
+        margin-bottom: 12px;
+      }
+
+      .question-hint::before {
+        content: "💡 ";
+      }
+
+      /* Options */
+      .options {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+      }
+
+      .option-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        padding: 10px 20px;
+        background: white;
+        border: 2px solid #e0e0e0;
+        border-radius: 25px;
+        transition: all 0.3s ease;
+        user-select: none;
+      }
+
+      .option-label:hover {
+        border-color: #667eea;
+      }
+
+      .option-label input:checked + span {
+        color: #667eea;
+        font-weight: bold;
+      }
+
+      .option-label input:checked {
+        accent-color: #667eea;
+      }
+
+      /* Buttons */
+      .button-container {
+        display: flex;
+        gap: 15px;
+        margin-top: 30px;
+        flex-wrap: wrap;
+      }
+
+      .btn {
+        padding: 12px 30px;
+        border: none;
+        border-radius: 25px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+      }
+
+      .btn-secondary {
+        background: #e0e0e0;
+        color: #333;
+      }
+
+      .btn-secondary:hover {
+        background: #d0d0d0;
+      }
+
+      .btn-success {
+        background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
+        color: white;
+      }
+
+      .btn-success:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(86, 171, 47, 0.4);
+      }
+
+      /* Results */
+      .results-section {
+        background: #f8f9fa;
+        padding: 25px;
+        border-radius: 8px;
+        margin-top: 20px;
+      }
+
+      .result-block {
+        background: white;
+        padding: 20px;
+        margin-bottom: 15px;
+        border-radius: 8px;
+        border-left: 5px solid #667eea;
+      }
+
+      .result-block.risk-high {
+        border-left-color: #e74c3c;
+        background: #fff5f5;
+      }
+
+      .result-block.risk-medium {
+        border-left-color: #f39c12;
+        background: #fffaf0;
+      }
+
+      .result-block.risk-low {
+        border-left-color: #27ae60;
+        background: #f0fff4;
+      }
+
+      .result-title {
+        font-size: 1.2em;
+        font-weight: bold;
+        margin-bottom: 10px;
+        color: #333;
+      }
+
+      .result-score {
+        font-size: 2em;
+        font-weight: bold;
+        color: #667eea;
+        margin: 10px 0;
+      }
+
+      .result-description {
+        color: #666;
+        line-height: 1.6;
+      }
+
+      .recommendation {
+        background: #e8f4f8;
+        padding: 15px;
+        border-radius: 8px;
+        margin-top: 15px;
+        border-left: 4px solid #3498db;
+      }
+
+      .recommendation-title {
+        font-weight: bold;
+        color: #2980b9;
+        margin-bottom: 8px;
+      }
+
+      /* Print Styles */
+      @media print {
+        .nav,
+        .button-container {
+          display: none;
+        }
+
+        .section {
+          display: block !important;
+          page-break-after: always;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container" id="main-content">
+      <!-- Header -->
+      <div class="header">
+        <h1>СпектраМаяк</h1>
+        <p>Комплексная диагностика расстройств аутистического спектра</p>
+      </div>
+
+      <!-- Progress Bar -->
+      <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+
+      <!-- Navigation -->
+      <div class="nav" id="nav"></div>
+
+      <!-- Sections will be generated by JavaScript -->
+    </div>
+
+    <script>
+      // Дополнительные методики (расширяющие methods-data.js)
+      const additionalMethods = {
+        qabf: {
+          id: "qabf",
+          title: "3. QABF: Вопросник функциональной оценки поведения",
+          description:
+            "Questions About Behavioral Function - 25 вопросов для определения функций проблемного поведения",
+          type: "fba",
+          questions: [
+            {
+              num: 1,
+              text: "Поведение возникает когда ребёнок один?",
+              func: "attention",
+              hint: "Когда никто не смотрит или не занимается ребёнком",
+            },
+            {
+              num: 2,
+              text: "Поведение когда вы заняты другими делами?",
+              func: "attention",
+              hint: "Говорите по телефону, готовите, работаете",
+            },
+            {
+              num: 3,
+              text: "Перестаёт когда даёте внимание?",
+              func: "attention",
+              hint: "Смотрите на ребёнка, говорите с ним - поведение прекращается",
+            },
+            {
+              num: 4,
+              text: "Поведение при выполнении заданий?",
+              func: "escape",
+              hint: "Когда просите одеться, поесть, убрать игрушки",
+            },
+            {
+              num: 5,
+              text: "Перестаёт если убрать требование?",
+              func: "escape",
+              hint: "Перестаёте настаивать - поведение stops",
+            },
+            {
+              num: 6,
+              text: "Когда хочет предмет/еду?",
+              func: "tangible",
+              hint: "Видит желаемое, не может получить",
+            },
+            {
+              num: 7,
+              text: "Перестаёт при получении желаемого?",
+              func: "tangible",
+              hint: "Получил игрушку/еду - поведение stops",
+            },
+            {
+              num: 8,
+              text: "Независимо от присутствия людей?",
+              func: "sensory",
+              hint: "Один или с людьми - одинаково",
+            },
+            {
+              num: 9,
+              text: "Продолжается даже когда всё есть?",
+              func: "sensory",
+              hint: "Не прекращается ни от чего внешнего",
+            },
+            {
+              num: 10,
+              text: "Выглядит довольным во время?",
+              func: "sensory",
+              hint: "Улыбается, смеётся, выглядит довольным",
+            },
+            {
+              num: 11,
+              text: "Усиливается при возбуждении/стрессе?",
+              func: "sensory",
+              hint: "Шум, толпа, усталость",
+            },
+            {
+              num: 12,
+              text: "Для получения вашей реакции?",
+              func: "attention",
+              hint: "Добивается внимания любым способом",
+            },
+            {
+              num: 13,
+              text: "Чтобы избежать сложного задания?",
+              func: "escape",
+              hint: "Начинается когда что-то требуют",
+            },
+            {
+              num: 14,
+              text: "Когда не может выразить желание?",
+              func: "tangible",
+              hint: "Не может сказать или показать что хочет",
+            },
+            {
+              num: 15,
+              text: "При многих стимула одновременно?",
+              func: "sensory",
+              hint: "Магазины, праздники, гости",
+            },
+            {
+              num: 16,
+              text: "При смене распорядка дня?",
+              func: "escape",
+              hint: "Меняете привычный routine",
+            },
+            {
+              num: 17,
+              text: "Когда ему скучно?",
+              func: "attention",
+              hint: "Нет занятий, развлечений",
+            },
+            {
+              num: 18,
+              text: "При непонимании инструкции?",
+              func: "escape",
+              hint: "Не понял что от него хотят",
+            },
+            {
+              num: 19,
+              text: "Когда видит желаемое недоступное?",
+              func: "tangible",
+              hint: "Витрина, чужая игрушка",
+            },
+            {
+              num: 20,
+              text: "При сенсорной перегрузке?",
+              func: "sensory",
+              hint: "Шум, свет, тактильные стимулы",
+            },
+            {
+              num: 21,
+              text: "Для избегания социальной ситуации?",
+              func: "escape",
+              hint: "Не хочет общаться, играть",
+            },
+            {
+              num: 22,
+              text: "Когда заканчивается enjoyable activity?",
+              func: "tangible",
+              hint: "Забираете планшет, выключаете мультики",
+            },
+            {
+              num: 23,
+              text: "При переходах между действиями?",
+              func: "escape",
+              hint: "Смена деятельности, переход в другое место",
+            },
+            {
+              num: 24,
+              text: "Стереотипное, автоматическое?",
+              func: "sensory",
+              hint: "Выглядит как автоматизм",
+            },
+            {
+              num: 25,
+              text: "Успокаивает или возбуждает?",
+              func: "sensory",
+              hint: "Похоже на самостимуляцию",
+            },
+          ],
+          options: [
+            { value: "always", label: "Всегда" },
+            { value: "often", label: "Часто" },
+            { value: "sometimes", label: "Иногда" },
+            { value: "rarely", label: "Редко" },
+            { value: "never", label: "Никогда" },
+          ],
+        },
+
+        mas: {
+          id: "mas",
+          title: "4. MAS: Мотивационная оценка сенсорных стимуляций",
+          description:
+            "Motivation Assessment Scale - 16 вопросов для оценки сенсорной мотивации",
+          type: "sensory",
+          questions: [
+            {
+              num: 1,
+              text: "Поведение когда ребёнок один?",
+              hint: "Без присутствия других людей",
+            },
+            {
+              num: 2,
+              text: "Поведение при физическом контакте?",
+              hint: "Когда вы касаетесь, обнимаете",
+            },
+            {
+              num: 3,
+              text: "Перестаёт при предоставлении желаемого?",
+              hint: "Получил что хотел - behaviour stops",
+            },
+            {
+              num: 4,
+              text: "Поведение независимо от активности?",
+              hint: "Во время игр, еды, отдыха - одинаково",
+            },
+            {
+              num: 5,
+              text: "Выглядит довольным/возбуждённым?",
+              hint: "Позитивные эмоции во время поведения",
+            },
+            {
+              num: 6,
+              text: "Продолжается длительно без причины?",
+              hint: "Может продолжаться 10+ минут",
+            },
+            {
+              num: 7,
+              text: "Предпочитает определённые стимулы?",
+              hint: "Свет, звуки, ткани, вкусы",
+            },
+            {
+              num: 8,
+              text: "Избегает определённые стимулы?",
+              hint: "Не переносит шумы, тактильный контакт",
+            },
+            {
+              num: 9,
+              text: "Поведение при сенсорной депривации?",
+              hint: "Когда мало стимулов вокруг",
+            },
+            {
+              num: 10,
+              text: "При сенсорной перегрузке?",
+              hint: "Много шума, света, людей",
+            },
+            {
+              num: 11,
+              text: "Самостимуляция (стереотипии)?",
+              hint: "Вращение, фырканье, похлопывания",
+            },
+            {
+              num: 12,
+              text: "Для регуляции arousal?",
+              hint: "Успокаивает или возбуждает",
+            },
+            {
+              num: 13,
+              text: "Сезонные/суточные изменения?",
+              hint: "Утро/вечер, зима/лето",
+            },
+            {
+              num: 14,
+              text: "При болезни/усталости?",
+              hint: "Усиливается или уменьшается",
+            },
+            {
+              num: 15,
+              text: "Реакция на лекарства/еда?",
+              hint: "Зависит от физических факторов",
+            },
+            {
+              num: 16,
+              text: "Генетическая/неврологическая основа?",
+              hint: "Семейный анамнез, диагнозы",
+            },
+          ],
+          options: [
+            { value: "agree", label: "Согласен" },
+            { value: "somewhat", label: "Отчасти согласен" },
+            { value: "neutral", label: "Не уверен" },
+            { value: "disagree", label: "Не согласен" },
+          ],
+        },
+
+        scq: {
+          id: "scq",
+          title: "5. SCQ: Социальный коммуникационный вопросник",
+          description:
+            "Social Communication Questionnaire - 40 вопросов для оценки социальных навыков и коммуникации",
+          type: "communication",
+          questions: [
+            {
+              num: 1,
+              text: "Использует жесты чтобы попросить?",
+              critical: true,
+              hint: "Показывает на желаемое",
+            },
+            {
+              num: 2,
+              text: "Указывает чтобы поделиться интересом?",
+              critical: true,
+              hint: "Показывает на самолёт, собаку",
+            },
+            {
+              num: 3,
+              text: "Играет с другими детьми?",
+              hint: "Совместные игры, не параллельные",
+            },
+            {
+              num: 4,
+              text: "Приносит предметы показать?",
+              critical: true,
+              hint: "Подносит чтобы вы посмотрели",
+            },
+            {
+              num: 5,
+              text: "Притворяется (ролевые игры)?",
+              hint: "Кормит куклу, 'разговаривает' по телефону",
+            },
+            {
+              num: 6,
+              text: "Понимает чужие чувства?",
+              hint: "Замечает когда грустно/весело",
+            },
+            {
+              num: 7,
+              text: "Показывает эмоции facially?",
+              hint: "Улыбается, хмурится appropriately",
+            },
+            {
+              num: 8,
+              text: "Имитирует действия взрослых?",
+              hint: "Повторяет ваши движения",
+            },
+            {
+              num: 9,
+              text: "Имитирует звуки/слова?",
+              hint: "Повторяет 'мама', 'пока-пока'",
+            },
+            {
+              num: 10,
+              text: "Использует символические игры?",
+              hint: "Кубики как дом, палка как лошадь",
+            },
+            {
+              num: 11,
+              text: "Смотрит в глаза при общении?",
+              hint: "Держит зрительный контакт",
+            },
+            {
+              num: 12,
+              text: "Инициирует социальный контакт?",
+              hint: "Подходит, говорит, смотрит",
+            },
+            {
+              num: 13,
+              text: "Реагирует на социальные улыбки?",
+              hint: "Улыбается в ответ",
+            },
+            {
+              num: 14,
+              text: "Понимает шутки/шутит?",
+              hint: "Смеётся над простыми шутками",
+            },
+            {
+              num: 15,
+              text: "Понимает метафоры/идиомы?",
+              hint: "Буквальное или figurative понимание",
+            },
+            {
+              num: 16,
+              text: "Использует невербальные сигналы?",
+              hint: "Кивает, машет, показывает",
+            },
+            {
+              num: 17,
+              text: "Понимает невербальные других?",
+              hint: "Следит за жестами",
+            },
+            {
+              num: 18,
+              text: "Поддерживает тему разговора?",
+              hint: "Не перескакивает постоянно",
+            },
+            {
+              num: 19,
+              text: "Использует язык для общения?",
+              hint: "Не только echolalia",
+            },
+            {
+              num: 20,
+              text: "Речевые стереотипии?",
+              hint: "Повторяет слова, фразы",
+            },
+            {
+              num: 21,
+              text: "Неологизмы (новые слова)?",
+              hint: "Придумывает свои слова",
+            },
+            {
+              num: 22,
+              text: "Проблемы с prosody (интонация)?",
+              hint: "Монотонность или странная интонация",
+            },
+            { num: 23, text: "Понимает вопросы?", hint: "Отвечает relevantly" },
+            { num: 24, text: "Задаёт вопросы?", hint: "Что это? Где? Почему?" },
+            {
+              num: 25,
+              text: "Рассказывает о событиях?",
+              hint: "Делится новостями",
+            },
+            {
+              num: 26,
+              text: "Понимает cause-effect?",
+              hint: "Причина-следствие в речи",
+            },
+            {
+              num: 27,
+              text: "Использует прошедшее время?",
+              hint: "Рассказывает о прошлом",
+            },
+            {
+              num: 28,
+              text: "Понимает временные понятия?",
+              hint: "Вчера, завтра, сейчас",
+            },
+            {
+              num: 29,
+              text: "Следует инструкциям?",
+              hint: "Понимает многошаговые инструкции",
+            },
+            {
+              num: 30,
+              text: "Понимает spatial concepts?",
+              hint: "Верх, низ, рядом, за",
+            },
+            {
+              num: 31,
+              text: "Интересуется людьми?",
+              hint: "Смотрит, подходит, интересуется",
+            },
+            {
+              num: 32,
+              text: "Понимает социальные правила?",
+              hint: "Когда можно/нельзя",
+            },
+            {
+              num: 33,
+              text: "Дружеские отношения?",
+              hint: "Has friends, not just plays alone",
+            },
+            {
+              num: 34,
+              text: "Понимает личное пространство?",
+              hint: "Не слишком близко/далеко",
+            },
+            {
+              num: 35,
+              text: "Реагирует на имя?",
+              critical: true,
+              hint: "Оборачивается когда зовёте",
+            },
+            {
+              num: 36,
+              text: "Смотрит на указанное?",
+              critical: true,
+              hint: "Следит за указыванием",
+            },
+            {
+              num: 37,
+              text: "Совместное внимание?",
+              hint: "Вместе смотрят на что-то",
+            },
+            {
+              num: 38,
+              text: "Понимает эмоции других?",
+              hint: "Замечает настроение",
+            },
+            { num: 39, text: "Эмпатия (сочувствие)?", hint: "Жалеет, утешает" },
+            {
+              num: 40,
+              text: "Социальная reciprocity?",
+              hint: "Взаимность в общении",
+            },
+          ],
+          options: [
+            { value: "yes", label: "Да" },
+            { value: "no", label: "Нет" },
+          ],
+        },
+
+        sensory: {
+          id: "sensory",
+          title: "6. Сенсорный профиль (расширенный)",
+          description:
+            "Оценка сенсорной обработки - 30 вопросов по всем сенсорным модальностям",
+          type: "sensory",
+          questions: [
+            {
+              num: 1,
+              text: "Избегает громких звуков?",
+              modality: "auditory",
+              hint: "Плачет от пылесоса, фена, громкой музыки",
+            },
+            {
+              num: 2,
+              text: "Покрывает уши при шумах?",
+              modality: "auditory",
+              hint: "Зажимает уши руками",
+            },
+            {
+              num: 3,
+              text: "Не замечает когда зовут?",
+              modality: "auditory",
+              hint: "Не реагирует на имя, будто глухой",
+            },
+            {
+              num: 4,
+              text: "Любит громкие звуки/музыку?",
+              modality: "auditory",
+              hint: "Сам создаёт шум, включает громко",
+            },
+            {
+              num: 5,
+              text: "Боится яркого света?",
+              modality: "visual",
+              hint: "Щурится, жмурится, прячет глаза",
+            },
+            {
+              num: 6,
+              text: "Зафиксирован на визуальных стимулах?",
+              modality: "visual",
+              hint: "Смотрит на свет, вращающиеся предметы",
+            },
+            {
+              num: 7,
+              text: "Избегает определённых текстур?",
+              modality: "tactile",
+              hint: "Не касается песка, травы, некоторых тканей",
+            },
+            {
+              num: 8,
+              text: "Не любит одежду/метки?",
+              modality: "tactile",
+              hint: "Снимает одежду, реагирует на швы",
+            },
+            {
+              num: 9,
+              text: "Избегает грязных игр?",
+              modality: "tactile",
+              hint: "Не любит лепку, рисование руками",
+            },
+            {
+              num: 10,
+              text: "Ищет тактильных стимулов?",
+              modality: "tactile",
+              hint: "Трогает всё, обнимает, трётся",
+            },
+            {
+              num: 11,
+              text: "Пробует всё на вкус?",
+              modality: "oral",
+              hint: "Взрослый - может несъедобное",
+            },
+            {
+              num: 12,
+              text: "Избегает определённых вкусов?",
+              modality: "oral",
+              hint: "Очень избирательный в еде",
+            },
+            {
+              num: 13,
+              text: "Жуёт несъедобное?",
+              modality: "oral",
+              hint: "Одежда, игрушки, предметы",
+            },
+            {
+              num: 14,
+              text: "Боится высоты/полётов?",
+              modality: "vestibular",
+              hint: "Качели, лифт, эскалатор",
+            },
+            {
+              num: 15,
+              text: "Любит вращаться/качаться?",
+              modality: "vestibular",
+              hint: "Крутится, качается, прыгает",
+            },
+            {
+              num: 16,
+              text: "Постоянно двигается?",
+              modality: "proprioceptive",
+              hint: "Не сидит на месте, бегает",
+            },
+            {
+              num: 17,
+              text: "Ищет сильных сенсорных стимулов?",
+              modality: "proprioceptive",
+              hint: "Бьётся, прыгает, сильно нажимает",
+            },
+            {
+              num: 18,
+              text: "Не замечает боль?",
+              modality: "proprioceptive",
+              hint: "Высокий порог боли",
+            },
+            {
+              num: 19,
+              text: "Путается в пространстве?",
+              modality: "proprioceptive",
+              hint: "Спотыкается, роняет вещи",
+            },
+            {
+              num: 20,
+              text: "Реагирует на запахи?",
+              modality: "olfactory",
+              hint: "Замечает/не любит запахи",
+            },
+            {
+              num: 21,
+              text: "Чует чужие запахи?",
+              modality: "olfactory",
+              hint: "Люди, еда, места",
+            },
+            {
+              num: 22,
+              text: "Пробует вещи на запах?",
+              modality: "olfactory",
+              hint: "Обнюхивает предметы, людей",
+            },
+            {
+              num: 23,
+              text: "Перегружается в людных местах?",
+              modality: "multisensory",
+              hint: "Магазины, праздники, группы",
+            },
+            {
+              num: 24,
+              text: "Трудно с несколькими стимулами?",
+              modality: "multisensory",
+              hint: "Шум + движение + люди",
+            },
+            {
+              num: 25,
+              text: "Успокаивается от давления?",
+              modality: "tactile",
+              hint: "Тяжёлое одеяло, объятия",
+            },
+            {
+              num: 26,
+              text: "Нужна движения для фокуса?",
+              modality: "vestibular",
+              hint: "Вращается, качается когда думает",
+            },
+            {
+              num: 27,
+              text: "Стереотипии (самостимуляция)?",
+              modality: "all",
+              hint: "Вращение, фырканье, похлопывания",
+            },
+            {
+              num: 28,
+              text: "Мелкая моторика слабая?",
+              modality: "proprioceptive",
+              hint: "Трудно с пуговицами, ложкой",
+            },
+            {
+              num: 29,
+              text: "Грубая моторика проблемная?",
+              modality: "vestibular",
+              hint: "Бег, прыжки, лестница",
+            },
+            {
+              num: 30,
+              text: "Планы на сенсорную интеграцию?",
+              modality: "all",
+              hint: "Нужна OT, сенсорная диета?",
+            },
+          ],
+          options: [
+            { value: "always", label: "Всегда" },
+            { value: "often", label: "Часто" },
+            { value: "sometimes", label: "Иногда" },
+            { value: "rarely", label: "Редко" },
+            { value: "never", label: "Никогда" },
+          ],
+        },
+
+        milestones: {
+          id: "milestones",
+          title: "7. Оценка развития (milestones)",
+          description:
+            "Проверка ключевых навыков по возрастам - коммуникация, моторика, социум",
+          type: "development",
+          questions: [
+            // 0-6 месяцев
+            {
+              num: 1,
+              text: "Улыбается в ответ (2 мес)?",
+              domain: "social",
+              age: "0-6м",
+              hint: "Социальная улыбка",
+            },
+            {
+              num: 2,
+              text: "Следит за игрушкой (3 мес)?",
+              domain: "visual",
+              age: "0-6м",
+              hint: "Глаза следят за объектом",
+            },
+            {
+              num: 3,
+              text: "Гулит, агукает (4 мес)?",
+              domain: "language",
+              age: "0-6м",
+              hint: "Звуки 'агу', 'гы'",
+            },
+            {
+              num: 4,
+              text: "Держит голову (3 мес)?",
+              domain: "motor",
+              age: "0-6м",
+              hint: "Контроль головы",
+            },
+            {
+              num: 5,
+              text: "Переворачивается (5 мес)?",
+              domain: "motor",
+              age: "0-6м",
+              hint: "С живота на спину и наоборот",
+            },
+
+            // 6-12 месяцев
+            {
+              num: 6,
+              text: "Сидит без поддержки (8 мес)?",
+              domain: "motor",
+              age: "6-12м",
+              hint: "Сам сидит",
+            },
+            {
+              num: 7,
+              text: "Лепет (ба-ба, ма-ма) (7 мес)?",
+              domain: "language",
+              age: "6-12м",
+              hint: "Повторяющиеся слоги",
+            },
+            {
+              num: 8,
+              text: "Ползает (9 мес)?",
+              domain: "motor",
+              age: "6-12м",
+              hint: "Ползает к игрушке",
+            },
+            {
+              num: 9,
+              text: "Указывает пальцем (12 мес)?",
+              domain: "communication",
+              age: "6-12м",
+              hint: "Просит или показывает",
+            },
+            {
+              num: 10,
+              text: "Первые слова (12 мес)?",
+              domain: "language",
+              age: "6-12м",
+              hint: "Мама, папа, дай",
+            },
+            {
+              num: 11,
+              text: "Стоит (12 мес)?",
+              domain: "motor",
+              age: "6-12м",
+              hint: "Стоит держась или нет",
+            },
+            {
+              num: 12,
+              text: "Прощание 'пока-пока' (10 мес)?",
+              domain: "social",
+              age: "6-12м",
+              hint: "Машет рукой",
+            },
+
+            // 12-24 месяцев
+            {
+              num: 13,
+              text: "Ходит самостоятельно (15 мес)?",
+              domain: "motor",
+              age: "12-24м",
+              hint: "Ходит без поддержки",
+            },
+            {
+              num: 14,
+              text: "50+ слов (24 мес)?",
+              domain: "language",
+              age: "12-24м",
+              hint: "Активный словарь",
+            },
+            {
+              num: 15,
+              text: "Фразы из 2 слов (24 мес)?",
+              domain: "language",
+              age: "12-24м",
+              hint: "Дай мяч, мама иди",
+            },
+            {
+              num: 16,
+              text: "Простые инструкции (18 мес)?",
+              domain: "cognitive",
+              age: "12-24м",
+              hint: "Понимает 'дай', 'сядь'",
+            },
+            {
+              num: 17,
+              text: "Притворяется (18 мес)?",
+              domain: "play",
+              age: "12-24м",
+              hint: "Кормит куклу, 'разговаривает'",
+            },
+            {
+              num: 18,
+              text: "Играет с другими (24 мес)?",
+              domain: "social",
+              age: "12-24м",
+              hint: "Не только параллельно",
+            },
+
+            // 24-36 месяцев
+            {
+              num: 19,
+              text: "Предложения (36 мес)?",
+              domain: "language",
+              age: "24-36м",
+              hint: "3+ слов в предложении",
+            },
+            {
+              num: 20,
+              text: "Рассказывает о прошлом (36 мес)?",
+              domain: "language",
+              age: "24-36м",
+              hint: "Делится что делал",
+            },
+            {
+              num: 21,
+              text: "Понимает цвета/формы (36 мес)?",
+              domain: "cognitive",
+              age: "24-36м",
+              hint: "Называет цвета, формы",
+            },
+            {
+              num: 22,
+              text: "Сам одевается (36 мес)?",
+              domain: "motor",
+              age: "24-36м",
+              hint: "Сами надевает простое",
+            },
+            {
+              num: 23,
+              text: "Ролевые игры (36 мес)?",
+              domain: "play",
+              age: "24-36м",
+              hint: "Дочки-матери, доктор",
+            },
+
+            // 3-5 лет
+            {
+              num: 24,
+              text: "Разговорная речь (48 мес)?",
+              domain: "language",
+              age: "3-5г",
+              hint: "Свободно общается",
+            },
+            {
+              num: 25,
+              text: "Понимает эмоции (48 мес)?",
+              domain: "social",
+              age: "3-5г",
+              hint: "Знает грустный/весёлый",
+            },
+            {
+              num: 26,
+              text: "Правила игры (48 мес)?",
+              domain: "social",
+              age: "3-5г",
+              hint: "Соблюдает правила",
+            },
+            {
+              num: 27,
+              text: "Мелкая моторика (48 мес)?",
+              domain: "motor",
+              age: "3-5г",
+              hint: "Ложка, ножницы, карандаш",
+            },
+            {
+              num: 28,
+              text: "Самостоятельно в туалете (48 мес)?",
+              domain: "selfcare",
+              age: "3-5г",
+              hint: "Полностью сам",
+            },
+
+            // Школьные навыки
+            {
+              num: 29,
+              text: "Буквы/цифры (60 мес)?",
+              domain: "academic",
+              age: "5-7г",
+              hint: "Знает алфавит, цифры",
+            },
+            {
+              num: 30,
+              text: "Социальные навыки (60 мес)?",
+              domain: "social",
+              age: "5-7г",
+              hint: "Друзья, конфликты, правила",
+            },
+          ],
+          options: [
+            { value: "yes", label: "Да, освоил" },
+            { value: "emerging", label: "Начинает" },
+            { value: "no", label: "Нет, не освоил" },
+          ],
+        },
+
+        brief: {
+          id: "brief",
+          title: "8. BRIEF-2: Исполнительные функции",
+          description:
+            "Behavior Rating Inventory of Executive Function - 15 вопросов для оценки повседневных исполнительных функций",
+          type: "executive",
+          questions: [
+            {
+              num: 1,
+              text: "План действий?",
+              domain: "planning",
+              hint: "Обдумывает прежде чем делать",
+            },
+            {
+              num: 2,
+              text: "Следует плану?",
+              domain: "planning",
+              hint: "Не теряет цель",
+            },
+            {
+              num: 3,
+              text: "Гибкость при изменениях?",
+              domain: "flexibility",
+              hint: "Адаптируется к переменам",
+            },
+            {
+              num: 4,
+              text: "Переключается между задачами?",
+              domain: "shifting",
+              hint: "Меняет деятельность",
+            },
+            {
+              num: 5,
+              text: "Эмоциональный контроль?",
+              domain: "emotional",
+              hint: "Не плачет/злится сразу",
+            },
+            {
+              num: 6,
+              text: "Тормозит импульсы?",
+              domain: "inhibition",
+              hint: "Не делает сразу что захочет",
+            },
+            {
+              num: 7,
+              text: "Запоминает инструкции?",
+              domain: "workingmemory",
+              hint: "Держит в голове указания",
+            },
+            {
+              num: 8,
+              text: "Организован?",
+              domain: "organization",
+              hint: "Порядок в вещах",
+            },
+            {
+              num: 9,
+              text: "Завершает начатое?",
+              domain: "taskcompletion",
+              hint: "Не бросает на полуслове",
+            },
+            {
+              num: 10,
+              text: "Самоконтроль?",
+              domain: "selfmonitoring",
+              hint: "Проверяет свою работу",
+            },
+            {
+              num: 11,
+              text: "Время на задачу?",
+              domain: "timemanagement",
+              hint: "Укладывается во время",
+            },
+            {
+              num: 12,
+              text: "Приоритеты?",
+              domain: "planning",
+              hint: "Важное делает первым",
+            },
+            {
+              num: 13,
+              text: "Решение проблем?",
+              domain: "problemsolving",
+              hint: "Сам находит выход",
+            },
+            {
+              num: 14,
+              text: "Внимание?",
+              domain: "attention",
+              hint: "Сосредотачивается",
+            },
+            {
+              num: 15,
+              text: "Инициатива?",
+              domain: "initiation",
+              hint: "Начинает задания сам",
+            },
+          ],
+          options: [
+            { value: "never", label: "Никогда" },
+            { value: "sometimes", label: "Иногда" },
+            { value: "often", label: "Часто" },
+            { value: "always", label: "Всегда" },
+          ],
+        },
+
+        conners: {
+          id: "conners",
+          title: "9. Conners-3: Оценка СДВГ",
+          description:
+            "Conners 3rd Edition - 18 вопросов для оценки симптомов дефицита внимания и гиперактивности",
+          type: "adhd",
+          questions: [
+            // Невнимательность
+            {
+              num: 1,
+              text: "Не концентрируется на деталях?",
+              domain: "inattention",
+              hint: "Допускает ошибки в заданиях",
+            },
+            {
+              num: 2,
+              text: "Трудно удерживать внимание?",
+              domain: "inattention",
+              hint: "Не может слушать, играть долго",
+            },
+            {
+              num: 3,
+              text: "Не слушает когда говорят?",
+              domain: "inattention",
+              hint: "Будто не слышит",
+            },
+            {
+              num: 4,
+              text: "Не заканчивает задания?",
+              domain: "inattention",
+              hint: "Бросает, не завершает",
+            },
+            {
+              num: 5,
+              text: "Затруднения в организации?",
+              domain: "inattention",
+              hint: "Хаос в задачах, вещах",
+            },
+            {
+              num: 6,
+              text: "Избегает умственных усилий?",
+              domain: "inattention",
+              hint: "Не любит домашку, задачи",
+            },
+            {
+              num: 7,
+              text: "Теряет вещи?",
+              domain: "inattention",
+              hint: "Игрушки, школьные принадлежности",
+            },
+            {
+              num: 8,
+              text: "Легко отвлекается?",
+              domain: "inattention",
+              hint: "Посторонние стимулы",
+            },
+            {
+              num: 9,
+              text: "Забывчив в повседневности?",
+              domain: "inattention",
+              hint: "Забывает routines, обязанности",
+            },
+
+            // Гиперактивность-импульсивность
+            {
+              num: 10,
+              text: "Ёрзает, вертится?",
+              domain: "hyperactivity",
+              hint: "Не может усидеть на месте",
+            },
+            {
+              num: 11,
+              text: "Вскакивает с места?",
+              domain: "hyperactivity",
+              hint: "Когда должен сидеть",
+            },
+            {
+              num: 12,
+              text: "Бегает, лазит неуместно?",
+              domain: "hyperactivity",
+              hint: "В ситуациях где нельзя",
+            },
+            {
+              num: 13,
+              text: "Трудно играть тихо?",
+              domain: "hyperactivity",
+              hint: "Шумный в игре",
+            },
+            {
+              num: 14,
+              text: "Всегда в движении?",
+              domain: "hyperactivity",
+              hint: "Как моторчик, не останавливается",
+            },
+            {
+              num: 15,
+              text: "Много говорит?",
+              domain: "hyperactivity",
+              hint: "Болтливость",
+            },
+            {
+              num: 16,
+              text: "Выпаливает ответы?",
+              domain: "impulsivity",
+              hint: "Не дослушав вопрос",
+            },
+            {
+              num: 17,
+              text: "Трудно ждать очередь?",
+              domain: "impulsivity",
+              hint: "Нетерпеливость",
+            },
+            {
+              num: 18,
+              text: "Перебивает других?",
+              domain: "impulsivity",
+              hint: "Вторгается в игры, разговоры",
+            },
+          ],
+          options: [
+            { value: "never", label: "Никогда" },
+            { value: "rarely", label: "Редко" },
+            { value: "sometimes", label: "Иногда" },
+            { value: "often", label: "Часто" },
+            { value: "veryoften", label: "Очень часто" },
+          ],
+        },
+      };
+
+      // Объединяем все методики
+      const allMethods = [
+        ...methodsData.methods,
+        ...Object.values(additionalMethods),
+      ];
+
+      // Текущие ответы
+      let currentAnswers = {};
+      let currentSection = 0;
+
+      // Инициализация
+      function init() {
+        createNavigation();
+        createSections();
+        updateProgress();
+        showSection(0);
+      }
+
+      // Создание навигации
+      function createNavigation() {
+        const nav = document.getElementById("nav");
+
+        // Инфо о ребёнке
+        const infoBtn = document.createElement("button");
+        infoBtn.className = "nav-btn";
+        infoBtn.textContent = "Инфо";
+        infoBtn.onclick = () => showSection(0);
+        nav.appendChild(infoBtn);
+
+        // Кнопки для каждой методики
+        allMethods.forEach((method, index) => {
+          const btn = document.createElement("button");
+          btn.className = "nav-btn";
+          btn.textContent = method.title.split(".")[0].trim();
+          btn.onclick = () => showSection(index + 1);
+          nav.appendChild(btn);
+        });
+
+        // Результаты
+        const resultsBtn = document.createElement("button");
+        resultsBtn.className = "nav-btn";
+        resultsBtn.textContent = "Результаты";
+        resultsBtn.onclick = () => showResults();
+        nav.appendChild(resultsBtn);
+      }
+
+      // Создание секций
+      function createSections() {
+        const container = document.getElementById("main-content");
+
+        // Секция 1: Информация о ребёнке
+        const infoSection = document.createElement("div");
+        infoSection.className = "section";
+        infoSection.id = "section-0";
+        infoSection.innerHTML = `
+                <h2 class="section-title">Информация о ребёнке</h2>
+                <div class="form-group">
+                    <label class="form-label">ФИО ребёнка</label>
+                    <input type="text" class="form-input" id="childName" placeholder="Иванов Иван Иванович">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Возраст</label>
+                    <input type="text" class="form-input" id="childAge" placeholder="3 года 6 месяцев">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Пол</label>
+                    <select class="form-input" id="childGender">
+                        <option value="">Выберите...</option>
+                        <option value="male">Мужской</option>
+                        <option value="female">Женский</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Диагноз (если есть)</label>
+                    <input type="text" class="form-input" id="childDiagnosis" placeholder="F84.x - РАС, неуточнённый">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Дата обследования</label>
+                    <input type="date" class="form-input" id="assessmentDate">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Дополнительные заметки</label>
+                    <textarea class="form-input" id="childNotes" placeholder="Особенности развития, сопутствующие состояния..."></textarea>
+                </div>
+                <div class="button-container">
+                    <button class="btn btn-primary" onclick="nextSection()">Далее →</button>
+                </div>
+            `;
+        container.appendChild(infoSection);
+
+        // Секции для каждой методики
+        allMethods.forEach((method, index) => {
+          const section = document.createElement("div");
+          section.className = "section";
+          section.id = `section-${index + 1}`;
+
+          let html = `
+                    <h2 class="section-title">${method.title}</h2>
+                    <div class="section-description">
+                        <strong>Описание:</strong> ${method.description}<br>
+                        <strong>Количество вопросов:</strong> ${method.questions.length}
+                    </div>
+                `;
+
+          method.questions.forEach((question, qIndex) => {
+            const isCritical = question.critical || false;
+            html += `
+                        <div class="question ${isCritical ? "critical" : ""}">
+                            <div class="question-header">
+                                <div class="question-number">${question.num}</div>
+                                <div class="question-text">${question.text}</div>
+                            </div>
+                            ${question.hint ? `<div class="question-hint">${question.hint}</div>` : ""}
+                            <div class="options">
+                                ${method.options
+                                  .map(
+                                    (option, oIndex) => `
+                                    <label class="option-label">
+                                        <input type="radio"
+                                               name="method_${method.id}_q${question.num}"
+                                               value="${option.value}"
+                                               data-method="${method.id}"
+                                               data-question="${question.num}"
+                                               onchange="saveAnswer('${method.id}', ${question.num}, '${option.value}')">
+                                        <span>${option.label}</span>
+                                    </label>
+                                `,
+                                  )
+                                  .join("")}
+                            </div>
+                        </div>
+                    `;
+          });
+
+          html += `
+                    <div class="button-container">
+                        <button class="btn btn-secondary" onclick="prevSection()">← Назад</button>
+                        <button class="btn btn-primary" onclick="nextSection()">Далее →</button>
+                    </div>
+                `;
+
+          section.innerHTML = html;
+          container.appendChild(section);
+        });
+
+        // Секция результатов
+        const resultsSection = document.createElement("div");
+        resultsSection.className = "section";
+        resultsSection.id = "section-results";
+        resultsSection.innerHTML = `
+                <h2 class="section-title">Интегральные результаты</h2>
+                <div id="resultsContent"></div>
+                <div class="button-container">
+                    <button class="btn btn-secondary" onclick="prevSection()">← Вернуться</button>
+                    <button class="btn btn-success" onclick="printReport()">🖨️ Печать/PDF</button>
+                </div>
+            `;
+        container.appendChild(resultsSection);
+      }
+
+      // Показать секцию
+      function showSection(index) {
+        document
+          .querySelectorAll(".section")
+          .forEach((s) => s.classList.remove("active"));
+        document
+          .querySelectorAll(".nav-btn")
+          .forEach((b) => b.classList.remove("active"));
+
+        const section = document.getElementById(`section-${index}`);
+        if (section) {
+          section.classList.add("active");
+        }
+
+        currentSection = index;
+        updateProgress();
+
+        // Обновляем активную кнопку навигации
+        const navBtns = document.querySelectorAll(".nav-btn");
+        if (navBtns[index]) {
+          navBtns[index].classList.add("active");
+        }
+      }
+
+      // Следующая секция
+      function nextSection() {
+        const totalSections = allMethods.length + 1; // +1 для секции инфо о ребёнке
+        if (currentSection < totalSections) {
+          if (currentSection === totalSections - 1) {
+            // После последней методики показываем результаты
+            showResults();
+          } else {
+            showSection(currentSection + 1);
+          }
+        }
+      }
+
+      // Предыдущая секция
+      function prevSection() {
+        if (currentSection > 0) {
+          showSection(currentSection - 1);
+        }
+      }
+
+      // Сохранить ответ
+      function saveAnswer(methodId, questionNum, value) {
+        if (!currentAnswers[methodId]) {
+          currentAnswers[methodId] = {};
+        }
+        currentAnswers[methodId][questionNum] = value;
+      }
+
+      // Обновить прогресс
+      function updateProgress() {
+        const totalSections = allMethods.length + 2; // Инфо + методики + результаты
+        const progress = ((currentSection + 1) / totalSections) * 100;
+        document.getElementById("progressBar").style.width = `${progress}%`;
+      }
+
+      // Показать результаты
+      function showResults() {
+        document
+          .querySelectorAll(".section")
+          .forEach((s) => s.classList.remove("active"));
+        document.getElementById("section-results").classList.add("active");
+
+        const resultsContent = document.getElementById("resultsContent");
+        let html = "";
+
+        // Информация о ребёнке
+        html += `
+                <div class="result-block">
+                    <div class="result-title">Информация о ребёнке</div>
+                    <p><strong>ФИО:</strong> ${document.getElementById("childName")?.value || "Не указано"}</p>
+                    <p><strong>Возраст:</strong> ${document.getElementById("childAge")?.value || "Не указан"}</p>
+                    <p><strong>Пол:</strong> ${document.getElementById("childGender")?.value === "male" ? "Мужской" : document.getElementById("childGender")?.value === "female" ? "Женский" : "Не указан"}</p>
+                    <p><strong>Диагноз:</strong> ${document.getElementById("childDiagnosis")?.value || "Не указан"}</p>
+                    <p><strong>Дата обследования:</strong> ${document.getElementById("assessmentDate")?.value || "Не указана"}</p>
+                    <p><strong>Заметки:</strong> ${document.getElementById("childNotes")?.value || "Нет"}</p>
+                </div>
+            `;
+
+        // Результаты по каждой методике
+        allMethods.forEach((method) => {
+          const result = calculateMethodScore(method);
+          html += `
+                    <div class="result-block ${result.riskClass}">
+                        <div class="result-title">${method.title}</div>
+                        <div class="result-score">${result.score}</div>
+                        <div class="result-description">${result.description}</div>
+                        ${result.recommendation ? `<div class="recommendation"><div class="recommendation-title">Рекомендация:</div>${result.recommendation}</div>` : ""}
+                    </div>
+                `;
+        });
+
+        // Интегрированная итоговая рекомендация
+        html += generateIntegratedConclusion();
+
+        resultsContent.innerHTML = html;
+      }
+
+      // Генерация интегрированной итоговой рекомендации
+      function generateIntegratedConclusion() {
+        // Собираем результаты всех методик
+        const methodResults = {};
+        allMethods.forEach((method) => {
+          methodResults[method.id] = calculateMethodScore(method);
+        });
+
+        // Анализируем профиль по ключевым областям
+        let riskLevel = "low";
+        let riskCount = 0;
+        let highRiskAreas = [];
+        let moderateRiskAreas = [];
+
+        // Определяем уровень риска по каждой методике
+        Object.entries(methodResults).forEach(([methodId, result]) => {
+          if (result.riskClass === "risk-high") {
+            highRiskAreas.push(methodId);
+            riskCount++;
+          } else if (result.riskClass === "risk-medium") {
+            moderateRiskAreas.push(methodId);
+          }
+        });
+
+        if (riskCount >= 3) {
+          riskLevel = "high";
+        } else if (riskCount >= 1 || moderateRiskAreas.length >= 3) {
+          riskLevel = "medium";
+        }
+
+        // Создаём конкретные рекомендации на основе результатов
+        const recommendations = [];
+
+        // 1. Анализ поведения (FBA)
+        const fastResult = methodResults.fast;
+        if (fastResult && fastResult.score) {
+          const funcName = fastResult.score.toLowerCase();
+          recommendations.push({
+            priority: "high",
+            area: "Поведение",
+            action: `Используйте Behaviour Intervention Plan для функции "${funcName}":`,
+            details: getFBADetails(funcName),
+          });
+        }
+
+        // 2. Сенсорная диета
+        const sensoryResult = methodResults.sensory;
+        if (sensoryResult && sensoryResult.riskClass !== "risk-low") {
+          recommendations.push({
+            priority:
+              sensoryResult.riskClass === "risk-high" ? "high" : "medium",
+            area: "Сенсорная",
+            action: "Внедрите сенсорную диету:",
+            details: [
+              "Тяжёлое одеяло или утяжелённый жилет (для глубокого давления)",
+              "Лиоффические упражнения (тяжёлая работа мышц: подтягивания, отжимания)",
+              "Календарный режим сенсорной активности каждые 2 часа",
+              "Тихий уголок с минимумом визуальных стимулов",
+              "Предварительное предупреждение о смене деятельности (таймер 5 мин)",
+            ],
+          });
+        }
+
+        // 3. Развитие коммуникации
+        if (
+          methodResults.mchatr &&
+          methodResults.mchatr.riskClass !== "risk-low"
+        ) {
+          recommendations.push({
+            priority:
+              methodResults.mchatr.riskClass === "risk-high"
+                ? "high"
+                : "medium",
+            area: "Коммуникация",
+            action: "Обучение коммуникации:",
+            details: [
+              "PECS (Picture Exchange Communication System) - система обмена карточками",
+              "Обучение mands (просьбам) используя ABA: начните с 3-5 высокомотивационных предметов",
+              "Визуальное расписание: картинки для последовательности действий (утро, день, вечер)",
+              "Joint attention - совместное внимание: указывайте, называйте, делите впечатления",
+              "Повседневные рутинные ситуации для практики: еда, одевание, туалет",
+            ],
+          });
+        }
+
+        // 4. Развитие социальных навыков
+        if (methodResults.scq && methodResults.scq.riskClass !== "risk-low") {
+          recommendations.push({
+            priority:
+              methodResults.scq.riskClass === "risk-high" ? "high" : "medium",
+            area: "Социум",
+            action: "Развитие социальных навыков:",
+            details: [
+              "Ролевые игры с четкими сценариями (магазин, доктор, кухня)",
+              "Социальные истории (Social Stories) для предстоящих событий",
+              "Video modeling - видеопримеры желаемого поведения",
+              "Игры с одним сверстником (не группой) для начала",
+              "Обучение эмоциям: карточки эмоций, мимика, игры 'угадай чувство'",
+            ],
+          });
+        }
+
+        // 5. Исполнительные функции
+        if (
+          methodResults.brief &&
+          methodResults.brief.riskClass !== "risk-low"
+        ) {
+          recommendations.push({
+            priority:
+              methodResults.brief.riskClass === "risk-high" ? "high" : "medium",
+            area: "Исполнительные функции",
+            action: "Поддержка исполнительных функций:",
+            details: [
+              "Визуальные таймеры для всех задач (визуальный обратный отсчёт)",
+              "Чек-листы с картинками для последовательности действий",
+              "Разбивайте задачи на мелкие шаги (не 'оденься', а 'возьми носки', 'надень носки')",
+              "Предварительное предупреждение за 5, 2, 1 минуту до перехода",
+              "Визуальная организация: ячейки для предметов, подписи",
+            ],
+          });
+        }
+
+        // 6. СДВГ
+        if (
+          methodResults.conners &&
+          methodResults.conners.riskClass !== "risk-low"
+        ) {
+          recommendations.push({
+            priority:
+              methodResults.conners.riskClass === "risk-high"
+                ? "high"
+                : "medium",
+            area: "Внимание",
+            action: "Поддержка внимания и гиперактивности:",
+            details: [
+              "Короткие задания 5-10 минут с перерывами",
+              "Физическая активность перед сидячими занятиями (прыжки, бег)",
+              "Минимум отвлекающих стимулов на рабочем месте",
+              "Фиджет-игрушки для рук (антистресс, резинки)",
+              "Позитивное подкрепление за фокусировку (не только за результат)",
+            ],
+          });
+        }
+
+        // 7. Развитие навыков
+        if (
+          methodResults.milestones &&
+          methodResults.milestones.riskClass !== "risk-low"
+        ) {
+          recommendations.push({
+            priority:
+              methodResults.milestones.riskClass === "risk-high"
+                ? "high"
+                : "medium",
+            area: "Развитие",
+            action: "Индивидуальная программа развития:",
+            details: [
+              "Проведите оценку по возрастным этапам (0-6м, 6-12м, 12-24м, 24-36м)",
+              "Начните с пропущенных навыков (backtracking - возвращение к более ранним этапам)",
+              "Breaking down сложные навыков на мелкие шаги (task analysis)",
+              "Используйте chaining: обучение от начала к концу или от конца к началу",
+              "Регулярная практика 5-10 минут каждый день (не редко, но долго)",
+            ],
+          });
+        }
+
+        // Сортируем рекомендации по приоритету
+        recommendations.sort((a, b) => {
+          const priorityOrder = { high: 0, medium: 1, low: 2 };
+          return priorityOrder[a.priority] - priorityOrder[b.priority];
+        });
+
+        // Генерируем HTML
+        let html = `
+                <div class="result-block ${riskLevel === "high" ? "risk-high" : riskLevel === "medium" ? "risk-medium" : "risk-low"}">
+                    <div class="result-title">🎯 ИНТЕГРИРОВАННОЕ ИТОГОВОЕ ЗАКЛЮЧЕНИЕ</div>
+                    <div class="result-description">
+                        <strong>Общий уровень риска:</strong> ${riskLevel === "high" ? "ВЫСОКИЙ" : riskLevel === "medium" ? "УМЕРЕННЫЙ" : "НИЗКИЙ"}<br>
+                        Областей с высоким риском: ${highRiskAreas.length} из ${allMethods.length}<br>
+                        Областей с умеренным риском: ${moderateRiskAreas.length} из ${allMethods.length}
+                    </div>
+                </div>
+
+                <div class="result-block" style="border-left-color: #9b59b6; background: #f5f0ff;">
+                    <div class="result-title">📋 ПЛАН ДЕЙСТВИЙ (приоритизирован)</div>
+                    <div class="result-description">
+                        Ниже представлен конкретный план действий на основе всех пройденных методик.
+                        Начинайте с пунктов высокого приоритета, затем переходите к среднему.
+                    </div>
+                </div>
+            `;
+
+        let priorityNum = 1;
+        recommendations.forEach((rec) => {
+          const priorityBadge =
+            rec.priority === "high"
+              ? "🔴 ВЫСОКИЙ ПРИОРИТЕТ"
+              : rec.priority === "medium"
+                ? "🟡 СРЕДНИЙ ПРИОРИТЕТ"
+                : "🟢 НИЗКИЙ ПРИОРИТЕТ";
+
+          html += `
+                    <div class="result-block" style="border-left-color: #9b59b6; background: #faf5ff;">
+                        <div class="result-title">${priorityNum}. ${priorityBadge} — ${rec.area}</div>
+                        <div class="result-description">
+                            <strong>${rec.action}</strong>
+                            <ul style="margin-top: 10px; margin-left: 20px;">
+                                ${rec.details.map((d) => `<li>${d}</li>`).join("")}
+                            </ul>
+                        </div>
+                    </div>
+                `;
+          priorityNum++;
+        });
+
+        // Добавляем заключение
+        html += `
+                <div class="result-block" style="border-left-color: #3498db; background: #e8f4f8;">
+                    <div class="result-title">📝 ЗАКЛЮЧЕНИЕ</div>
+                    <div class="result-description">
+                        <strong>Общий анализ:</strong> ${getGeneralAnalysis(riskLevel, highRiskAreas, moderateRiskAreas)}<br><br>
+                        <strong>Следующие шаги:</strong><br>
+                        1. Начните implementing рекомендаций высокого приоритета немедленно (сегодня)<br>
+                        2. Создайте визуальное расписание и внедрите его в течение недели<br>
+                        3. Найдите ABA-терапевта или behavioural consultant для консультации<br>
+                        4. Запишите baseline (текущий уровень) по ключевым навыкам для измерения прогресса<br>
+                        5. Пересмотрите план через 4 недели и скорректируйте на основе прогресса<br><br>
+                        <em>Помните: маленькие шаги каждый день лучше чем большие попытки раз в месяц. Консистенция — ключ к успеху.</em>
+                    </div>
+                </div>
+            `;
+
+        return html;
+      }
+
+      // Детали для FBA (Functional Behavioral Assessment)
+      function getFBADetails(funcName) {
+        const details = {
+          внимание: [
+            "Предотвращение: давайте внимание ДО начала проблемного поведения (каждые 5-10 минут)",
+            "Запланированное внимание: выделите 3-5 минут качественного внимания каждый час",
+            "Игнорирование проблемного поведения (если безопасно): не смотрите, не говорите, не реагируйте",
+            "Хвалите желаемое поведение конкретно: 'Молодец, что играешь спокойно'",
+            "Научите.ask: 'Посмотри на меня', 'Поиграй со мной' — заместительное поведение",
+          ],
+          избегание: [
+            "Предотвращение: разбейте задания на мелкие шаги (не 'оденься', а 'возьми носки')",
+            "Визуальная поддержка: картинки для последовательности действий",
+            "Предварительное предупреждение: таймер 2 минуты до начала, 1 минута до начала",
+            "Выбор: предлагайте выбор когда возможно ('хочешь красную или синюю футболку?')",
+            "Reinforce завершение: хвалите/награждайте после выполнения (не только начало)",
+          ],
+          "предметы/еда": [
+            "PECS или система карточек для nonverbal requests",
+            "Научите mands (просьбам) используя high-preference предметы",
+            "Не давайте желаемое во время проблемного поведения (wait for calm)",
+            "Reinforce asking appropriately: немедленная награда за calm request",
+            "Расписание доступа к предпочитаемым предметам (предсказуемость)",
+          ],
+          сенсорная: [
+            "Сенсорная диета: запланированная сенсорная активность каждые 2 часа",
+            "Тяжёлое одеяло, утяжелённый жилет, объятия (глубокое давление)",
+            "Лиоффические упражнения: подтягивания, отжимания, перенос тяжестей",
+            "Тихий уголок с минимумом стимулов (для перегрузки)",
+            "Альтернативная самостимуляция: прыжки на фитболе, жёвательная резинка",
+          ],
+        };
+
+        return (
+          details[funcName] || [
+            "Проведите более детальный FBA для уточнения функции",
+            "Используйте ABC chart (Antecedent-Behavior-Consequence) для анализа",
+          ]
+        );
+      }
+
+      // Общий анализ
+      function getGeneralAnalysis(riskLevel, highRiskAreas, moderateRiskAreas) {
+        if (riskLevel === "high") {
+          return `Ребёнок демонстрирует значительные трудности в ${highRiskAreas.length} ключевых областях развития. Рекомендуется комплексная программа вмешательства с фокусом на коммуникацию, поведение и сенсорную регуляцию. Требуется профессиональная оценка детским психиатром и ABA-терапевтом.`;
+        } else if (riskLevel === "medium") {
+          return `Ребёнок демонстрирует умеренные трудности в нескольких областях. Рекомендуется профилактическая программа с фокусом на ${moderateRiskAreas.length} проблемных зонах. Родительского обучения и домашних interventions может быть достаточно.`;
+        } else {
+          return `Показатели в пределах возрастной нормы. Продолжайте регулярное развитие, мониторинг и создание обогащённой среды для развития навыков.`;
+        }
+      }
+
+      // Рассчитать результат методики
+      function calculateMethodScore(method) {
+        const answers = currentAnswers[method.id] || {};
+        const answered = Object.keys(answers).length;
+        const total = method.questions.length;
+
+        if (answered === 0) {
+          return {
+            score: "Не пройдено",
+            description: "Не получено ответов",
+            riskClass: "",
+            recommendation: null,
+          };
+        }
+
+        let score = 0;
+        let riskScore = 0;
+
+        switch (method.id) {
+          case "mchatr":
+            // M-CHAT-R: Подсчёт "Нет" и критических вопросов
+            const noAnswers = Object.values(answers).filter(
+              (a) => a === "no",
+            ).length;
+            const criticalQuestions = method.questions.filter(
+              (q) => q.critical,
+            );
+            const criticalFail = criticalQuestions.filter(
+              (q) => answers[q.num] === "no",
+            ).length;
+
+            if (noAnswers >= 3 || criticalFail >= 2) {
+              return {
+                score: "Высокий риск",
+                description: `Риск РАС: ${noAnswers}/20 вопросов указывают на риск, ${criticalFail}/${criticalQuestions.length} критических не пройдено. Рекомендуется углублённая диагностика.`,
+                riskClass: "risk-high",
+                recommendation:
+                  "Необходимо проведение ADOS-2 и консультация детского психиатра. Не откладывайте обследование.",
+              };
+            } else if (noAnswers >= 2) {
+              return {
+                score: "Средний риск",
+                description: `Риск РАС: ${noAnswers}/20 вопросов указывают на умеренный риск.`,
+                riskClass: "risk-medium",
+                recommendation:
+                  "Рекомендуется повторное обследование через 1 месяц и наблюдение специалиста.",
+              };
+            } else {
+              return {
+                score: "Низкий риск",
+                description: `Риск РАС: ${noAnswers}/20 вопросов. Признаков риска не выявлено.`,
+                riskClass: "risk-low",
+                recommendation:
+                  "Продолжайте регулярное развитие. Повторный скрининг через 6 месяцев.",
+              };
+            }
+
+          case "fast":
+            // FAST: Доминирующая функция
+            const funcCounts = {
+              attention: 0,
+              escape: 0,
+              tangible: 0,
+              sensory: 0,
+            };
+            Object.entries(answers).forEach(([q, a]) => {
+              const question = method.questions.find(
+                (q) => q.num === parseInt(q),
+              );
+              if (
+                question &&
+                question.func &&
+                (a === "yes" || a === "sometimes")
+              ) {
+                funcCounts[question.func]++;
+              }
+            });
+
+            const dominantFunc = Object.entries(funcCounts).sort(
+              (a, b) => b[1] - a[1],
+            )[0];
+            const funcNames = {
+              attention: "Внимание",
+              escape: "Избегание",
+              tangible: "Предметы/еда",
+              sensory: "Сенсорная",
+            };
+
+            return {
+              score: funcNames[dominantFunc[0]] || "Не определено",
+              description: `Доминирующая функция поведения: ${funcNames[dominantFunc[0]] || "Не определено"} (${dominantFunc[1]} вопросов). Ребёнок использует проблемное поведение для получения ${funcNames[dominantFunc[0]]?.toLowerCase() || "чего-то"}.`,
+              riskClass: "risk-medium",
+              recommendation: `Используйте Behaviour Intervention Plan на основе функции ${funcNames[dominantFunc[0]]?.toLowerCase() || "неизвестной"}. Обучите альтернативным способам получения того же самого.`,
+            };
+
+          case "scq":
+            // SCQ: Подсчёт "Нет"
+            const scqNoAnswers = Object.values(answers).filter(
+              (a) => a === "no",
+            ).length;
+            const scqPercent = (scqNoAnswers / total) * 100;
+
+            if (scqNoAnswers >= 15) {
+              return {
+                score: "Высокий риск",
+                description: `${scqNoAnswers}/40 вопросов указывают на значительные трудности в социальной коммуникации (${scqPercent.toFixed(0)}%).`,
+                riskClass: "risk-high",
+                recommendation:
+                  "Рекомендуется углублённая оценка социальных навыков и коммуникации. Рассмотрите программирование ABA/VB.",
+              };
+            } else if (scqNoAnswers >= 8) {
+              return {
+                score: "Средний риск",
+                description: `${scqNoAnswers}/40 вопросов указывают на умеренные трудности в социальной коммуникации.`,
+                riskClass: "risk-medium",
+                recommendation:
+                  "Рекомендуются занятия по развитию социальных навыков и речи.",
+              };
+            } else {
+              return {
+                score: "Низкий риск",
+                description: `${scqNoAnswers}/40 вопросов. Социальная коммуникация в пределах возрастной нормы.`,
+                riskClass: "risk-low",
+                recommendation:
+                  "Продолжайте развивать социальные навыки через игру и общение.",
+              };
+            }
+
+          default:
+            // Общий подсчёт для остальных методик
+            const positiveAnswers = Object.values(answers).filter(
+              (a) =>
+                a === "yes" ||
+                a === "always" ||
+                a === "often" ||
+                a === "veryoften",
+            ).length;
+            const percent = (positiveAnswers / answered) * 100;
+
+            if (percent >= 60) {
+              return {
+                score: "Значительные трудности",
+                description: `${positiveAnswers}/${answered} вопросов (${percent.toFixed(0)}%) указывают на значительные трудности в данной области.`,
+                riskClass: "risk-high",
+                recommendation:
+                  "Рекомендуется углублённая оценка и индивидуальная программа коррекции.",
+              };
+            } else if (percent >= 30) {
+              return {
+                score: "Умеренные трудности",
+                description: `${positiveAnswers}/${answered} вопросов (${percent.toFixed(0)}%) указывают на умеренные трудности.`,
+                riskClass: "risk-medium",
+                recommendation:
+                  "Рекомендуются профилактические мероприятия и наблюдение.",
+              };
+            } else {
+              return {
+                score: "В пределах нормы",
+                description: `${positiveAnswers}/${answered} вопросов (${percent.toFixed(0)}%). Показатели в пределах возрастной нормы.`,
+                riskClass: "risk-low",
+                recommendation: "Продолжайте регулярное развитие и мониторинг.",
+              };
+            }
+        }
+      }
+
+
+      // Печать/сохранение отчёта
+      function generatePDF() {
+        console.log("=== Подготовка к печати ===");
+
+        // Скрываем навигацию и кнопки
+        const nav = document.querySelector('.nav');
+        const progress = document.querySelector('.progress-container');
+        const buttons = document.querySelectorAll('.button-container');
+
+        if (nav) nav.style.display = 'none';
+        if (progress) progress.style.display = 'none';
+        buttons.forEach(btn => btn.style.display = 'none');
+
+        console.log("Ненужные элементы скрыты");
+
+        // Открываем диалог печати - пользователь сможет сохранить как PDF
+        window.print();
+
+        console.log("Диалог печати открыт");
+
+        // Восстанавливаем элементы через 2 секунды
+        setTimeout(() => {
+          if (nav) nav.style.display = '';
+          if (progress) progress.style.display = '';
+          buttons.forEach(btn => btn.style.display = '');
+          console.log("Элементы восстановлены");
+        }, 2000);
+      }
+
+      // Запуск
+      document.addEventListener("DOMContentLoaded", init);
+    </script>
+  </body>
+</html>

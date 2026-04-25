@@ -1,0 +1,984 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Комплексная диагностика РАС</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: Arial, sans-serif;
+        background: #f5f5f5;
+        padding: 20px;
+      }
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+        background: white;
+        padding: 40px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        color: #333;
+        margin-bottom: 10px;
+      }
+      .subtitle {
+        color: #666;
+        margin-bottom: 30px;
+        font-size: 14px;
+      }
+      .child-info {
+        background: #e3f2fd;
+        padding: 20px;
+        border-radius: 5px;
+        margin-bottom: 30px;
+      }
+      .child-info input {
+        width: 100%;
+        padding: 10px;
+        margin: 5px 0;
+        border: 1px solid #ddd;
+        border-radius: 3px;
+      }
+      .method-section {
+        margin-bottom: 40px;
+      }
+      .method-title {
+        font-size: 20px;
+        font-weight: bold;
+        margin-bottom: 20px;
+        color: #2196f3;
+        border-bottom: 2px solid #2196f3;
+        padding-bottom: 10px;
+      }
+      .question {
+        background: #f9f9f9;
+        padding: 15px;
+        border-radius: 5px;
+        margin-bottom: 10px;
+        border-left: 4px solid #ddd;
+      }
+      .question.critical {
+        border-left-color: #f44336;
+        background: #ffebee;
+      }
+      .question-text {
+        font-size: 15px;
+        line-height: 1.4;
+        margin-bottom: 10px;
+        color: #333;
+      }
+      .options {
+        display: flex;
+        gap: 15px;
+      }
+      .option {
+        flex: 1;
+      }
+      .option label {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        padding: 8px;
+        background: white;
+        border: 2px solid #ddd;
+        border-radius: 3px;
+        transition: all 0.3s;
+      }
+      .option label:hover {
+        border-color: #2196f3;
+        background: #e3f2fd;
+      }
+      .option input {
+        margin-right: 8px;
+      }
+      button {
+        background: #2196f3;
+        color: white;
+        padding: 15px 40px;
+        border: none;
+        border-radius: 5px;
+        font-size: 16px;
+        cursor: pointer;
+        margin: 10px 5px;
+        transition: background 0.3s;
+      }
+      button:hover {
+        background: #1976d2;
+      }
+      .nav-buttons {
+        text-align: center;
+        margin: 30px 0;
+      }
+      .section {
+        display: none;
+      }
+      .section.active {
+        display: block;
+      }
+      #results {
+        display: none;
+      }
+      .risk-level {
+        padding: 20px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+        text-align: center;
+      }
+      .risk-low {
+        background: #c8e6c9;
+        color: #2e7d32;
+      }
+      .risk-medium {
+        background: #fff3cd;
+        color: #856404;
+      }
+      .risk-high {
+        background: #f8d7da;
+        color: #721c24;
+      }
+      .recommendations {
+        background: #f9f9f9;
+        padding: 20px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+      }
+      .recommendations h3 {
+        margin-bottom: 15px;
+        color: #333;
+      }
+      .recommendations ul {
+        margin-left: 20px;
+      }
+      .recommendations li {
+        margin-bottom: 8px;
+        line-height: 1.4;
+      }
+      .method-result {
+        background: white;
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 5px;
+        border-left: 4px solid #2196f3;
+      }
+      .progress {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 30px;
+      }
+      .progress-step {
+        flex: 1;
+        text-align: center;
+        padding: 10px;
+        background: #ddd;
+        margin: 0 5px;
+        border-radius: 3px;
+        font-size: 12px;
+      }
+      .progress-step.active {
+        background: #2196f3;
+        color: white;
+      }
+      .progress-step.completed {
+        background: #4caf50;
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>🧠 Комплексная диагностика РАС</h1>
+      <p class="subtitle">
+        СпектраМаяк - Система комплексной оценки для личного использования
+      </p>
+
+      <div class="progress">
+        <div class="progress-step active" id="step-1">1. Инфо</div>
+        <div class="progress-step" id="step-2">2. M-CHAT-R</div>
+        <div class="progress-step" id="step-3">3. Поведение</div>
+        <div class="progress-step" id="step-4">4. Сенсорика</div>
+        <div class="progress-step" id="step-5">5. Итог</div>
+      </div>
+
+      <div id="section-child-info" class="section active">
+        <h2 style="margin-bottom: 20px">Информация о ребёнке</h2>
+        <div class="child-info">
+          <label>ФИО ребёнка:</label>
+          <input
+            type="text"
+            id="child-name"
+            placeholder="Иванов Иван Иванович"
+          />
+
+          <label>Возраст (месяцев):</label>
+          <input type="number" id="child-age" placeholder="24" value="24" />
+
+          <label>Дата рождения:</label>
+          <input type="date" id="child-dob" />
+
+          <label>Дополнительные заметки:</label>
+          <input
+            type="text"
+            id="child-notes"
+            placeholder="Например: говорит 10 слов, не реагирует на имя..."
+          />
+        </div>
+        <div style="text-align: center">
+          <button onclick="nextSection()">Далее →</button>
+        </div>
+      </div>
+
+      <div id="section-mchatr" class="section">
+        <div class="method-title">
+          1. M-CHAT-R: Скрининг аутизма (16-30 месяцев)
+        </div>
+        <p style="margin-bottom: 20px; color: #666">
+          Отвечайте на вопросы, основываясь на текущем поведении ребёнка.
+        </p>
+        <form id="mchatr-form"></form>
+        <div class="nav-buttons">
+          <button onclick="prevSection()">← Назад</button>
+          <button onclick="nextSection()">Далее →</button>
+        </div>
+      </div>
+
+      <div id="section-behavior" class="section">
+        <div class="method-title">2. FAST: Функция проблемного поведения</div>
+        <p style="margin-bottom: 20px; color: #666">
+          Определяет, ЗАЧЕМ ребёнок ведёт себя определённым образом
+        </p>
+        <form id="fast-form"></form>
+        <div class="nav-buttons">
+          <button onclick="prevSection()">← Назад</button>
+          <button onclick="nextSection()">Далее →</button>
+        </div>
+      </div>
+
+      <div id="section-sensory" class="section">
+        <div class="method-title">3. Сенсорный профиль</div>
+        <p style="margin-bottom: 20px; color: #666">
+          Оценка чувствительности к сенсорным стимулам
+        </p>
+        <form id="sensory-form"></form>
+        <div class="nav-buttons">
+          <button onclick="prevSection()">← Назад</button>
+          <button onclick="calculateAndShowResults()">
+            Получить результаты и PDF →
+          </button>
+        </div>
+      </div>
+
+      <div id="results">
+        <h2>📊 ИНТЕГРАЛЬНОЕ ЗАКЛЮЧЕНИЕ</h2>
+        <div
+          id="child-header"
+          style="
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+          "
+        ></div>
+
+        <div id="mchatr-result" class="method-result"></div>
+        <div id="fast-result" class="method-result"></div>
+        <div id="sensory-result" class="method-result"></div>
+
+        <div class="recommendations">
+          <h3>🎯 ИНТЕГРАЛЬНЫЕ РЕКОМЕНДАЦИИ:</h3>
+          <ul id="integrated-recommendations"></ul>
+        </div>
+
+        <div class="recommendations">
+          <h3>📋 ПЛАН ДЕЙСТВИЙ (приоритеты):</h3>
+          <ul id="action-plan"></ul>
+        </div>
+
+        <div style="text-align: center; margin: 30px 0">
+          <button onclick="generatePDF()" style="background: #4caf50">
+            📄 Скачать PDF отчёт
+          </button>
+          <button onclick="window.location.reload()">Пройти заново</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Данные методик
+      const mchatrQuestions = [
+        {
+          num: 1,
+          text: "Ваш ребёнок любит, когда его качают, подбрасывают на коленях?",
+          critical: false,
+        },
+        {
+          num: 2,
+          text: "Ваш ребёнок интересуется другими детьми?",
+          critical: true,
+        },
+        {
+          num: 3,
+          text: "Ваш ребёнок любит карабкаться по предметам (лестница)?",
+          critical: false,
+        },
+        { num: 4, text: "Ваш ребёнок любит играть в прятки?", critical: false },
+        {
+          num: 5,
+          text: "Ваш ребёнок притворяется (разговаривает по телефону, ухаживает за куклами)?",
+          critical: false,
+        },
+        {
+          num: 6,
+          text: "Ваш ребёнок использует указательный палец, чтобы попросить что-то?",
+          critical: false,
+        },
+        {
+          num: 7,
+          text: "Ваш ребёнок использует указательный палец, чтобы указать на интересующее?",
+          critical: true,
+        },
+        {
+          num: 8,
+          text: "Ваш ребёнок правильно играет с игрушками (не пробует на вкус)?",
+          critical: false,
+        },
+        {
+          num: 9,
+          text: "Ваш ребёнок приносит вам предметы, чтобы показать?",
+          critical: true,
+        },
+        {
+          num: 10,
+          text: "Ваш ребёнок смотрит вам в глаза более 1-2 секунд?",
+          critical: false,
+        },
+        {
+          num: 11,
+          text: "Ваш ребёнок чрезмерно чувствителен к шуму (зажимает уши)?",
+          critical: false,
+        },
+        {
+          num: 12,
+          text: "Ваш ребёнок улыбается в ответ на вашу улыбку?",
+          critical: false,
+        },
+        {
+          num: 13,
+          text: "Ваш ребёнок имитирует вас (повторяет действия)?",
+          critical: true,
+        },
+        { num: 14, text: "Ваш ребёнок реагирует на своё имя?", critical: true },
+        {
+          num: 15,
+          text: "Если вы укажете на игрушку, ребёнок посмотрит на неё?",
+          critical: true,
+        },
+        { num: 16, text: "Ваш ребёнок ходит?", critical: false },
+        {
+          num: 17,
+          text: "Ваш ребёнок смотрит на то, на что смотрите вы?",
+          critical: false,
+        },
+        {
+          num: 18,
+          text: "Ваш ребёнок делает необычные движения пальцами у лица?",
+          critical: false,
+        },
+        {
+          num: 19,
+          text: "Ваш ребёнок пытается привлечь внимание к своей деятельности?",
+          critical: false,
+        },
+        {
+          num: 20,
+          text: "Вы когда-нибудь задумывались, не глухой ли ребёнок?",
+          critical: false,
+        },
+      ];
+
+      const fastQuestions = [
+        {
+          num: 1,
+          text: "Поведение происходит когда ребёнок один?",
+          func: "attention",
+        },
+        {
+          num: 2,
+          text: "Поведение происходит когда взрослый занят?",
+          func: "attention",
+        },
+        {
+          num: 3,
+          text: "Поведение прекращается когда даёте внимание?",
+          func: "attention",
+        },
+        {
+          num: 4,
+          text: "Поведение происходит когда ребёнка просят что-то сделать?",
+          func: "escape",
+        },
+        {
+          num: 5,
+          text: "Поведение прекращается когда снимаете требование?",
+          func: "escape",
+        },
+        {
+          num: 6,
+          text: "Поведение происходит когда ребёнок хочет что-то получить?",
+          func: "tangible",
+        },
+        {
+          num: 7,
+          text: "Поведение прекращается когда даёте желаемый предмет?",
+          func: "tangible",
+        },
+        {
+          num: 8,
+          text: "Поведение происходит независимо от окружения?",
+          func: "sensory",
+        },
+        {
+          num: 9,
+          text: "Поведение продолжается даже когда всё есть?",
+          func: "sensory",
+        },
+        {
+          num: 10,
+          text: "Ребёнок выглядит довольным во время поведения?",
+          func: "sensory",
+        },
+        {
+          num: 11,
+          text: "Поведение усиливается когдаComfort ребёнка?",
+          func: "sensory",
+        },
+        {
+          num: 12,
+          text: "Поведение происходит для получения реакции?",
+          func: "attention",
+        },
+        {
+          num: 13,
+          text: "Поведение происходит чтобы избежать задания?",
+          func: "escape",
+        },
+        {
+          num: 14,
+          text: "Поведение происходит когда ребёнок не может выразить желание?",
+          func: "tangible",
+        },
+        {
+          num: 15,
+          text: "Поведение происходит когда много стимулов (шум, люди)?",
+          func: "sensory",
+        },
+        {
+          num: 16,
+          text: "Поведение происходит при смене routine?",
+          func: "escape",
+        },
+      ];
+
+      const sensoryQuestions = [
+        {
+          num: 1,
+          text: "Ребёнок реагирует на громкие звуки (пылесос, фен)?",
+          domain: "auditory",
+          hyper: true,
+        },
+        {
+          num: 2,
+          text: "Ребёнок ищет звуки (колокольчик, музыка)?",
+          domain: "auditory",
+          hyper: false,
+        },
+        {
+          num: 3,
+          text: "Ребёнок избегает яркого света?",
+          domain: "visual",
+          hyper: true,
+        },
+        {
+          num: 4,
+          text: "Ребёнок смотрит на вращающиеся предметы?",
+          domain: "visual",
+          hyper: false,
+        },
+        {
+          num: 5,
+          text: "Ребёнок избегает грязных/липких веществ?",
+          domain: "tactile",
+          hyper: true,
+        },
+        {
+          num: 6,
+          text: "Ребёнок трогает разные поверхности?",
+          domain: "tactile",
+          hyper: false,
+        },
+        {
+          num: 7,
+          text: "Ребёнок избегает определённых текстур еды?",
+          domain: "oral",
+          hyper: true,
+        },
+        {
+          num: 8,
+          text: "Ребёнок пробует несъедобное на вкус?",
+          domain: "oral",
+          hyper: false,
+        },
+        {
+          num: 9,
+          text: "Ребёнок избегает движений (качели, качели)?",
+          domain: "vestibular",
+          hyper: true,
+        },
+        {
+          num: 10,
+          text: "Ребёнок постоянно крутится, прыгает?",
+          domain: "vestibular",
+          hyper: false,
+        },
+        {
+          num: 11,
+          text: "Ребёнок избегает tight обнимает?",
+          domain: "proprioceptive",
+          hyper: true,
+        },
+        {
+          num: 12,
+          text: "Ребёнок любит крепкие объятия, deep pressure?",
+          domain: "proprioceptive",
+          hyper: false,
+        },
+      ];
+
+      let currentSection = 0;
+      const sections = [
+        "section-child-info",
+        "section-mchatr",
+        "section-behavior",
+        "section-sensory",
+        "results",
+      ];
+
+      // Инициализация форм
+      function initForms() {
+        // M-CHAT-R
+        const mchatrForm = document.getElementById("mchatr-form");
+        mchatrQuestions.forEach((q) => {
+          mchatrForm.innerHTML += `
+                    <div class="question${q.critical ? " critical" : ""}">
+                        <p class="question-text"><strong>${q.num}.</strong> ${q.text}${q.critical ? ' <span style="color:#f44336;">★ Критический</span>' : ""}</p>
+                        <div class="options">
+                            <div class="option"><label><input type="radio" name="mchr_${q.num}" value="yes"> Да</label></div>
+                            <div class="option"><label><input type="radio" name="mchr_${q.num}" value="no"> Нет</label></div>
+                        </div>
+                    </div>
+                `;
+        });
+
+        // FAST
+        const fastForm = document.getElementById("fast-form");
+        fastQuestions.forEach((q) => {
+          fastForm.innerHTML += `
+                    <div class="question">
+                        <p class="question-text"><strong>${q.num}.</strong> ${q.text}</p>
+                        <div class="options">
+                            <div class="option"><label><input type="radio" name="fast_${q.num}" value="yes"> Да</label></div>
+                            <div class="option"><label><input type="radio" name="fast_${q.num}" value="no"> Нет</label></div>
+                        </div>
+                    </div>
+                `;
+        });
+
+        // Sensory
+        const sensoryForm = document.getElementById("sensory-form");
+        sensoryQuestions.forEach((q) => {
+          sensoryForm.innerHTML += `
+                    <div class="question">
+                        <p class="question-text"><strong>${q.num}.</strong> ${q.text} <small>(${q.domain})</small></p>
+                        <div class="options">
+                            <div class="option"><label><input type="radio" name="sens_${q.num}" value="yes"> Да</label></div>
+                            <div class="option"><label><input type="radio" name="sens_${q.num}" value="no"> Нет</label></div>
+                        </div>
+                    </div>
+                `;
+        });
+      }
+
+      function nextSection() {
+        if (currentSection < sections.length - 1) {
+          document
+            .getElementById(sections[currentSection])
+            .classList.remove("active");
+          currentSection++;
+          document
+            .getElementById(sections[currentSection])
+            .classList.add("active");
+          updateProgress();
+        }
+      }
+
+      function prevSection() {
+        if (currentSection > 0) {
+          document
+            .getElementById(sections[currentSection])
+            .classList.remove("active");
+          currentSection--;
+          document
+            .getElementById(sections[currentSection])
+            .classList.add("active");
+          updateProgress();
+        }
+      }
+
+      function updateProgress() {
+        for (let i = 1; i <= 5; i++) {
+          const step = document.getElementById(`step-${i}`);
+          step.classList.remove("active", "completed");
+          if (i < currentSection + 1) step.classList.add("completed");
+          if (i === currentSection + 1) step.classList.add("active");
+        }
+      }
+
+      function calculateAndShowResults() {
+        const childName =
+          document.getElementById("child-name").value || "Не указано";
+        const childAge =
+          document.getElementById("child-age").value || "Не указано";
+        const childDOB =
+          document.getElementById("child-dob").value || "Не указано";
+        const childNotes =
+          document.getElementById("child-notes").value || "Нет";
+
+        document.getElementById("child-header").innerHTML = `
+                <h3>👤 Ребёнок: ${childName}</h3>
+                <p><strong>Возраст:</strong> ${childAge} месяцев</p>
+                <p><strong>Дата рождения:</strong> ${childDOB}</p>
+                <p><strong>Заметки:</strong> ${childNotes}</p>
+                <p><strong>Дата обследования:</strong> ${new Date().toLocaleDateString("ru-RU")}</p>
+            `;
+
+        // M-CHAT-R
+        let mchatrScore = 0;
+        let mchatrCritical = 0;
+        const failedMchatr = [];
+        mchatrQuestions.forEach((q) => {
+          const answer = document.querySelector(
+            `input[name="mchr_${q.num}"]:checked`,
+          )?.value;
+          if (answer === "no") {
+            mchatrScore++;
+            failedMchatr.push(q.num);
+            if (q.critical) mchatrCritical++;
+          }
+        });
+
+        let mchatrRisk, mchatrRiskClass, mchatrRecs;
+        if (mchatrScore <= 2) {
+          mchatrRisk = "НИЗКИЙ";
+          mchatrRiskClass = "risk-low";
+          mchatrRecs = [
+            "Продолжать наблюдение",
+            "Поддерживать коммуникативное взаимодействие",
+          ];
+        } else if (mchatrScore <= 7 && mchatrCritical <= 2) {
+          mchatrRisk = "СРЕДНИЙ";
+          mchatrRiskClass = "risk-medium";
+          mchatrRecs = [
+            "Дополнительная диагностика у специалиста",
+            "Вести дневник наблюдений",
+            "Развивать навыки: указывание, реакцию на имя, имитацию",
+          ];
+        } else {
+          mchatrRisk = "ВЫСОКИЙ";
+          mchatrRiskClass = "risk-high";
+          mchatrRecs = [
+            "Немедленно обратиться к специалисту",
+            "Пройти полную диагностику (ADOS-2, ADI-R)",
+            "Начать ABA-терапию",
+            "Развивать коммуникацию (PECS, жесты)",
+            "Работать с проблемным поведением",
+            "Создать структурированную среду",
+          ];
+        }
+
+        document.getElementById("mchatr-result").innerHTML = `
+                <h4>🔍 M-CHAT-R: ${mchatrRisk} РИСК</h4>
+                <p><strong>Балл:</strong> ${mchatrScore}/20 | <strong>Критические отказы:</strong> ${mchatrCritical}/6</p>
+                <p><strong>Не пройдены вопросы:</strong> ${failedMchatr.join(", ") || "нет"}</p>
+                <div class="risk-level ${mchatrRiskClass}">${mchatrRisk}</div>
+            `;
+
+        // FAST
+        const fastScores = { attention: 0, escape: 0, tangible: 0, sensory: 0 };
+        fastQuestions.forEach((q) => {
+          const answer = document.querySelector(
+            `input[name="fast_${q.num}"]:checked`,
+          )?.value;
+          if (answer === "yes") fastScores[q.func]++;
+        });
+
+        const dominantFast = Object.entries(fastScores).sort(
+          (a, b) => b[1] - a[1],
+        )[0];
+        const fastRecs = {
+          attention: [
+            "Предварять внимание до запроса",
+            "Учить альтернативным способам привлечения внимания",
+            'Запланировать "время внимания" регулярно',
+          ],
+          escape: [
+            "Разбить задачи на маленькие шаги",
+            "Использовать visual schedule",
+            "Давать выбор",
+            "Обеспечить breaks между заданиями",
+          ],
+          tangible: [
+            "Учить просить (PECS, жесты, слова)",
+            "Предлагать выбор до начала поведения",
+            "Создать routine вокруг запросов",
+          ],
+          sensory: [
+            "Обеспечить сенсорную диету",
+            "Предоставить альтернативную сенсорную стимуляцию",
+            "Использовать deep pressure activies",
+            "Создать сенсорную friendly среду",
+          ],
+        };
+
+        document.getElementById("fast-result").innerHTML = `
+                <h4>🔄 Функция поведения</h4>
+                <p><strong>Внимание:</strong> ${fastScores.attention} | <strong>Эскапизм:</strong> ${fastScores.escape} | <strong>Предметы:</strong> ${fastScores.tangible} | <strong>Сенсорика:</strong> ${fastScores.sensory}</p>
+                <p><strong>Доминирующая функция:</strong> ${dominantFast[0].toUpperCase()} (${dominantFast[1]} баллов)</p>
+            `;
+
+        // Sensory
+        const sensoryScores = {
+          auditory: { hyper: 0, hypo: 0 },
+          visual: { hyper: 0, hypo: 0 },
+          tactile: { hyper: 0, hypo: 0 },
+          oral: { hyper: 0, hypo: 0 },
+          vestibular: { hyper: 0, hypo: 0 },
+          proprioceptive: { hyper: 0, hypo: 0 },
+        };
+        sensoryQuestions.forEach((q) => {
+          const answer = document.querySelector(
+            `input[name="sens_${q.num}"]:checked`,
+          )?.value;
+          if (answer === "yes") {
+            if (q.hyper) sensoryScores[q.domain].hyper++;
+            else sensoryScores[q.domain].hypo++;
+          }
+        });
+
+        const sensoryRecs = [];
+        Object.entries(sensoryScores).forEach(([domain, scores]) => {
+          if (scores.hyper > 0)
+            sensoryRecs.push(
+              `${domain}: снижать стимуляцию (защита от перегрузки)`,
+            );
+          if (scores.hypo > 0)
+            sensoryRecs.push(
+              `${domain}: увеличивать стимуляцию (активное сенсорное питание)`,
+            );
+        });
+
+        document.getElementById("sensory-result").innerHTML = `
+                <h4>🧠 Сенсорный профиль</h4>
+                <p><strong>Гиперчувствительность (избегание):</strong></p>
+                <ul>${
+                  Object.entries(sensoryScores)
+                    .filter(([_, s]) => s.hyper > 0)
+                    .map(([d, s]) => `<li>${d}: ${s.hyper}</li>`)
+                    .join("") || "<li>нет</li>"
+                }</ul>
+                <p><strong>Гипочувствительность (поиск):</strong></p>
+                <ul>${
+                  Object.entries(sensoryScores)
+                    .filter(([_, s]) => s.hypo > 0)
+                    .map(([d, s]) => `<li>${d}: ${s.hypo}</li>`)
+                    .join("") || "<li>нет</li>"
+                }</ul>
+            `;
+
+        // Интегральные рекомендации
+        const allRecs = [
+          ...mchatrRecs,
+          ...fastRecs[dominantFast[0]],
+          ...sensoryRecs,
+        ];
+        const prioritizedRecs = allRecs.slice(0, 10);
+
+        document.getElementById("integrated-recommendations").innerHTML =
+          prioritizedRecs.map((r) => `<li>${r}</li>`).join("");
+
+        // План действий
+        const actionPlan = [
+          `1. СРОЧНО: ${mchatrScore >= 8 ? "Консультация психиатра + диагностика ADOS-2" : "Наблюдение + запись behaviours"}`,
+          `2. Коммуникация: ${failedMchatr.includes(14) ? "Учить реагировать на имя" : "Продолжать развивать речь"}`,
+          `3. Поведение: применить ${dominantFast[0]}-strategies из FAST`,
+          `4. Сенсорика: создать сенсорную среду`,
+          `5. СТРУКТУРА: visual schedule, routines, preparation к изменениям`,
+          `6. ABA: начать базовые программы (mands, tacts, imitation)`,
+          `7. Родители: join support group, learn ABA basics`,
+        ];
+        document.getElementById("action-plan").innerHTML = actionPlan
+          .map((a) => `<li>${a}</li>`)
+          .join("");
+
+        // Показать результаты
+        document.getElementById("section-sensory").classList.remove("active");
+        document.getElementById("results").style.display = "block";
+        updateProgress();
+      }
+
+      function generatePDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        let y = 20;
+
+        // Заголовок
+        doc.setFontSize(20);
+        doc.text("КОМПЛЕКСНАЯ ДИАГНОСТИКА РАС", 105, y, { align: "center" });
+        y += 15;
+
+        doc.setFontSize(12);
+        doc.text(`Дата: ${new Date().toLocaleDateString("ru-RU")}`, 105, y, {
+          align: "center",
+        });
+        y += 15;
+
+        // Информация о ребёнке
+        const childName =
+          document.getElementById("child-name").value || "Не указано";
+        const childAge =
+          document.getElementById("child-age").value || "Не указано";
+
+        doc.setFontSize(14);
+        doc.text(`Ребёнок: ${childName}`, 20, y);
+        y += 8;
+        doc.setFontSize(12);
+        doc.text(`Возраст: ${childAge} месяцев`, 20, y);
+        y += 15;
+
+        // M-CHAT-R
+        doc.setFontSize(14);
+        doc.text("1. M-CHAT-R: Скрининг аутизма", 20, y);
+        y += 10;
+
+        const mchatrResult = document.getElementById("mchatr-result").innerText;
+        doc.setFontSize(10);
+        const mchatrLines = doc.splitTextToSize(mchatrResult, 170);
+        doc.text(mchatrLines, 20, y);
+        y += mchatrLines.length * 5 + 10;
+
+        // FAST
+        doc.setFontSize(14);
+        doc.text("2. FAST: Функция поведения", 20, y);
+        y += 10;
+
+        const fastResult = document.getElementById("fast-result").innerText;
+        doc.setFontSize(10);
+        const fastLines = doc.splitTextToSize(fastResult, 170);
+        doc.text(fastLines, 20, y);
+        y += fastLines.length * 5 + 10;
+
+        // Сенсорика
+        doc.setFontSize(14);
+        doc.text("3. Сенсорный профиль", 20, y);
+        y += 10;
+
+        const sensoryResult =
+          document.getElementById("sensory-result").innerText;
+        doc.setFontSize(10);
+        const sensoryLines = doc.splitTextToSize(sensoryResult, 170);
+        doc.text(sensoryLines, 20, y);
+        y += sensoryLines.length * 5 + 10;
+
+        // Рекомендации
+        doc.setFontSize(14);
+        doc.text("ИНТЕГРАЛЬНЫЕ РЕКОМЕНДАЦИИ:", 20, y);
+        y += 10;
+
+        const recs = Array.from(
+          document.querySelectorAll("#integrated-recommendations li"),
+        ).map((li) => li.innerText);
+        doc.setFontSize(10);
+        recs.forEach((rec) => {
+          if (y > 270) {
+            doc.addPage();
+            y = 20;
+          }
+          const recLines = doc.splitTextToSize(rec, 170);
+          doc.text(recLines, 20, y);
+          y += recLines.length * 5 + 3;
+        });
+
+        // План действий
+        y += 5;
+        doc.setFontSize(14);
+        doc.text("ПЛАН ДЕЙСТВИЙ:", 20, y);
+        y += 10;
+
+        const actions = Array.from(
+          document.querySelectorAll("#action-plan li"),
+        ).map((li) => li.innerText);
+        doc.setFontSize(10);
+        actions.forEach((action) => {
+          if (y > 270) {
+            doc.addPage();
+            y = 20;
+          }
+          const actionLines = doc.splitTextToSize(action, 170);
+          doc.text(actionLines, 20, y);
+          y += actionLines.length * 5 + 3;
+        });
+
+        // Дисклеймер
+        if (y > 240) {
+          doc.addPage();
+          y = 20;
+        }
+        y += 10;
+        doc.setFontSize(8);
+        doc.text("ДИСКЛЕЙМЕР:", 20, y);
+        y += 7;
+        doc.text(
+          "Это заключение сформировано автоматически на основании введённых данных.",
+          20,
+          y,
+        );
+        y += 5;
+        doc.text(
+          "Является вспомогательным инструментом для наблюдения.",
+          20,
+          y,
+        );
+        y += 5;
+        doc.text(
+          "НЕ является медицинским диагнозом. Только специалист может поставить диагноз.",
+          20,
+          y,
+        );
+
+        // Сохранение
+        doc.save(
+          `diagnostika_${childName.replace(/\s+/g, "_")}_${new Date().toISOString().split("T")[0]}.pdf`,
+        );
+      }
+
+      // Инициализация
+      initForms();
+    </script>
+  </body>
+</html>

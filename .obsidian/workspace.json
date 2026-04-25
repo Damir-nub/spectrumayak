@@ -1,0 +1,229 @@
+{
+  "main": {
+    "id": "6955a9d97a81a0f9",
+    "type": "split",
+    "children": [
+      {
+        "id": "10f424d889ad871e",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "837b205eac21f061",
+            "type": "leaf",
+            "state": {
+              "type": "graph",
+              "state": {},
+              "icon": "lucide-git-fork",
+              "title": "Граф"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "690318caf13b6acf",
+    "type": "split",
+    "children": [
+      {
+        "id": "2842ad4ee5e5389f",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "b1eba4f6d544566b",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Файловый менеджер"
+            }
+          },
+          {
+            "id": "77c8df9f9198d3c2",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Поиск"
+            }
+          },
+          {
+            "id": "62b026866038ea37",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Закладки"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "9bd21dbf43d403af",
+    "type": "split",
+    "children": [
+      {
+        "id": "b4c6d8158d4334d6",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "10634c41e02a71fd",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Обратные ссылки"
+            }
+          },
+          {
+            "id": "44c0f55e82788529",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Исходящие ссылки"
+            }
+          },
+          {
+            "id": "d0e8c250e38cfe61",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Теги"
+            }
+          },
+          {
+            "id": "28aabea0a85aa95d",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "Все свойства"
+            }
+          },
+          {
+            "id": "1cd846ae2c16df1f",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Структура"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Меню быстрого перехода": false,
+      "graph:Граф": false,
+      "canvas:Создать новый холст": false,
+      "daily-notes:Сегодняшняя заметка": false,
+      "templates:Вставить шаблон": false,
+      "command-palette:Открыть палитру команд": false,
+      "bases:Создать новую базу": false
+    }
+  },
+  "active": "837b205eac21f061",
+  "lastOpenFiles": [
+    "mchatr-test/index-all-backup.html",
+    "mchatr-test/index-fixed.html",
+    "mchatr-test/index-all.html.tmp.2256.1777158662178",
+    "mchatr-test/test-pdf-working.html",
+    "mchatr-test/test-pdf-working.html.tmp.2256.1777158651096",
+    "mchatr-test/index-all.html.tmp.2256.1777158585375",
+    "mchatr-test/simple-pdf-test.html",
+    "mchatr-test/simple-pdf-test.html.tmp.2256.1777158507401",
+    "mchatr-test/index-all.html.tmp.2256.1777158467190",
+    "mchatr-test/ОТЧЁТ-О-ПРОВЕРКЕ-2026-04-26.md",
+    "mchatr-test/ОТЧЁТ-О-ПРОВЕРКЕ-2026-04-26.md.tmp.2256.1777158264357",
+    "mchatr-test/test-pdf.html",
+    "mchatr-test/README-ПРОДОЛЖЕНИЕ.md",
+    "plans/2026-04-26-diagnostic-methods-implementation.md",
+    "plans/2026-04-26-individual-recommendations-system.md",
+    "plans/2026-04-26-children-management.md",
+    "test-results/tests-auth-flow-Authentica-c9f44-0-Protected-routes-behavior/error-context.md",
+    "test-results/tests-auth-flow-Authentication-Flow-9-Logout-flow/error-context.md",
+    "test-results/tests-auth-flow-Authentication-Flow-6-Complete-login-flow/error-context.md",
+    "node_modules/playwright-core/lib/tools/cli-client/skill/references/video-recording.md",
+    "node_modules/playwright-core/lib/tools/cli-client/skill/references/tracing.md",
+    "node_modules/playwright-core/lib/tools/cli-client/skill/references/storage-state.md",
+    "node_modules/playwright-core/lib/tools/cli-client/skill/references/test-generation.md",
+    "node_modules/playwright-core/lib/tools/cli-client/skill/references/session-management.md",
+    "node_modules/playwright-core/lib/tools/cli-client/skill/references/playwright-tests.md",
+    "node_modules/playwright-core/lib/tools/cli-client/skill/references/running-code.md",
+    "node_modules/playwright-core/lib/tools/cli-client/skill/references/request-mocking.md",
+    "node_modules/playwright-core/lib/tools/cli-client/skill/references/element-attributes.md",
+    "node_modules/playwright-core/lib/tools/cli-client/skill/SKILL.md",
+    "node_modules/playwright-core/lib/vite/traceViewer/playwright-logo.svg",
+    "node_modules/playwright-core/lib/vite/recorder/playwright-logo.svg",
+    "node_modules/playwright-core/lib/tools/trace/SKILL.md",
+    "node_modules/playwright-core/lib/server/chromium/appIcon.png",
+    "node_modules/@playwright/test/README.md",
+    "node_modules/next/README.md",
+    "node_modules/next/dist/compiled/regenerator-runtime/README.md",
+    "node_modules/next/dist/compiled/react-refresh/README.md",
+    "node_modules/next/dist/compiled/react-is/README.md",
+    "node_modules/next/dist/compiled/@babel/runtime/README.md",
+    "node_modules/prisma/build/public/assets/tick.8cbb6a93.svg",
+    "node_modules/prisma/build/public/assets/tick-indeterminate.aec8a44d.svg",
+    "node_modules/prisma/build/public/assets/string.ea615a24.svg",
+    "node_modules/prisma/build/public/assets/settings.5ad25af2.svg",
+    "node_modules/prisma/build/public/assets/search.2ed766ce.svg",
+    "node_modules/prisma/build/public/assets/refresh.d5448ccc.svg",
+    "node_modules/prisma/build/public/assets/plus.8fbf7ad3.svg",
+    "Без названия.canvas"
+  ]
+}

@@ -1,0 +1,56 @@
+# Операционные системы
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# Локальные файлы и бизнес-контекст
+.business/
+.local/
+
+# Временные файлы редакторов
+*.swp
+*.swo
+*~
+.*.sw*
+.*.swo
+
+# IDE и редакторы
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Логи
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Бэкапы
+*.backup
+*.bak
+*.old
+*_backup.*
+
+# Node.js (если будет backend)
+node_modules/
+package-lock.json
+yarn.lock
+
+# Environment файлы
+.env
+.env.local
+.env.*.local
+
+# Временные файлы
+tmp/
+temp/
+*.tmp
+
+# Сгенерированные файлы
+*.pdf

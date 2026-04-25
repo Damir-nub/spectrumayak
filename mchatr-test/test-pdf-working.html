@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Рабочий тест PDF</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+        max-width: 900px;
+        margin: 0 auto;
+      }
+      .content {
+        background: white;
+        padding: 30px;
+        border: 2px solid #333;
+        margin: 20px 0;
+      }
+      .header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        text-align: center;
+        border-radius: 10px;
+        margin-bottom: 20px;
+      }
+      .section {
+        background: #f8f9fa;
+        padding: 20px;
+        margin: 15px 0;
+        border-left: 5px solid #667eea;
+        border-radius: 8px;
+      }
+      button {
+        padding: 15px 30px;
+        background: #667eea;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        font-size: 18px;
+        cursor: pointer;
+        margin: 10px 5px;
+      }
+      button:hover {
+        background: #5568d3;
+      }
+      #log {
+        background: #f0f0f0;
+        padding: 10px;
+        margin: 20px 0;
+        border-radius: 5px;
+        font-family: monospace;
+        font-size: 12px;
+        max-height: 200px;
+        overflow-y: auto;
+      }
+      .success {
+        color: green;
+        font-weight: bold;
+      }
+      .error {
+        color: red;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🧪 Рабочий тест PDF генерации</h1>
+    <p>Эта страница создаст PDF с гарантированно заполненным контентом</p>
+
+    <button onclick="test1()">Тест 1: Простой контент</button>
+    <button onclick="test2()">Тест 2: Сложный контент</button>
+    <button onclick="test3()">Тест 3: Реальный отчёт</button>
+
+    <div id="log"></div>
+
+    <div id="content1" class="content" style="display: none">
+      <div class="header">
+        <h1 style="margin: 0">Тестовый PDF документ</h1>
+        <p style="margin: 10px 0 0 0">
+          Создан:
+          <script>
+            document.write(new Date().toLocaleString("ru-RU"));
+          </script>
+        </p>
+      </div>
+      <div class="section">
+        <h2>Проверка текста</h2>
+        <p>Это простой текст для проверки что PDF генерируется корректно.</p>
+        <p>Если вы видите этот текст в PDF - значит всё работает!</p>
+      </div>
+    </div>
+
+    <div id="content2" class="content" style="display: none">
+      <div class="header">
+        <h1 style="margin: 0">СпектраМаяк - Тестовый отчёт</h1>
+        <p style="margin: 10px 0 0 0; opacity: 0.9">
+          Комплексная диагностика РАС
+        </p>
+        <p style="margin: 5px 0 0 0; opacity: 0.8">
+          Дата:
+          <script>
+            document.write(new Date().toLocaleDateString("ru-RU"));
+          </script>
+        </p>
+      </div>
+      <div class="section">
+        <h2 style="color: #667eea">Информация о ребёнке</h2>
+        <p><strong>ФИО:</strong> Иванов Иван Иванович</p>
+        <p><strong>Возраст:</strong> 3 года 6 месяцев</p>
+        <p><strong>Пол:</strong> Мужской</p>
+      </div>
+      <div
+        class="section"
+        style="background: #fff5f5; border-left-color: #e74c3c"
+      >
+        <h3 style="color: #e74c3c">M-CHAT-R: Скрининг аутизма</h3>
+        <p style="font-size: 24px; font-weight: bold; color: #667eea">
+          Высокий риск
+        </p>
+        <p>5/20 вопросов указывают на риск РАС</p>
+        <div
+          style="
+            background: #e8f4f8;
+            padding: 15px;
+            margin-top: 15px;
+            border-left: 4px solid #3498db;
+            border-radius: 8px;
+          "
+        >
+          <strong>Рекомендация:</strong><br />
+          Необходимо проведение углублённой диагностики ADOS-2.
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function log(msg, type = "") {
+        const logDiv = document.getElementById("log");
+        const time = new Date().toLocaleTimeString();
+        const className =
+          type === "success" ? "success" : type === "error" ? "error" : "";
+        logDiv.innerHTML += `<div class="${className}">[${time}] ${msg}</div>`;
+        logDiv.scrollTop = logDiv.scrollHeight;
+        console.log(msg);
+      }
+
+      function createPDF(element, filename) {
+        return new Promise((resolve, reject) => {
+          log(`Начинаю генерацию ${filename}...`);
+
+          const opt = {
+            margin: 10,
+            filename: filename,
+            image: { type: "jpeg", quality: 0.98 },
+            html2canvas: { scale: 2, logging: false, useCORS: true },
+            jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+          };
+
+          html2pdf()
+            .set(opt)
+            .from(element)
+            .save()
+            .then(() => {
+              log(`✅ ${filename} успешно создан!`, "success");
+              resolve();
+            })
+            .catch((err) => {
+              log(`❌ Ошибка создания ${filename}: ${err.message}`, "error");
+              reject(err);
+            });
+        });
+      }
+
+      async function test1() {
+        log("=== Тест 1: Простой контент ===");
+        const el = document.getElementById("content1");
+        el.style.display = "block";
+
+        await new Promise((r) => setTimeout(r, 500));
+
+        try {
+          await createPDF(el, "test1_prostoy.pdf");
+          alert("✅ Тест 1 пройден! Проверьте файл test1_prostoy.pdf");
+        } catch (err) {
+          alert("❌ Тест 1 провален: " + err.message);
+        }
+
+        el.style.display = "none";
+      }
+
+      async function test2() {
+        log("=== Тест 2: Сложный контент ===");
+        const el = document.getElementById("content2");
+        el.style.display = "block";
+
+        await new Promise((r) => setTimeout(r, 500));
+
+        try {
+          await createPDF(el, "test2_slozhny.pdf");
+          alert(
+            "✅ Тест 2 пройден! Проверьте файл test2_slozhny.pdf - должен быть со стилями",
+          );
+        } catch (err) {
+          alert("❌ Тест 2 провален: " + err.message);
+        }
+
+        el.style.display = "none";
+      }
+
+      async function test3() {
+        log("=== Тест 3: Реальный отчёт ===");
+
+        // Создаём реальный контент как в основном приложении
+        const html = `
+        <div style="padding:30px; font-family:Arial,sans-serif; max-width:900px; margin:0 auto; background:white;">
+          <div style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:white; padding:30px; text-align:center; border-radius:10px; margin-bottom:20px;">
+            <h1 style="font-size:28px; margin:0;">СпектраМаяк</h1>
+            <p style="margin:10px 0 0 0; opacity:0.9;">Комплексная диагностика расстройств аутистического спектра</p>
+            <p style="margin:5px 0 0 0; opacity:0.8; font-size:14px;">Дата отчёта: ${new Date().toLocaleDateString("ru-RU")}</p>
+          </div>
+          <div style="background:white; padding:20px; margin-bottom:15px; border-radius:8px; border-left:5px solid #667eea; border:1px solid #e0e0e0;">
+            <h2 style="font-size:1.2em; margin:0 0 10px 0; color:#333;">Информация о ребёнке</h2>
+            <p style="margin:5px 0; color:#333;"><strong>ФИО:</strong> Тестовый ребёнок</p>
+            <p style="margin:5px 0; color:#333;"><strong>Возраст:</strong> 3 года 6 месяцев</p>
+            <p style="margin:5px 0; color:#333;"><strong>Пол:</strong> Мужской</p>
+            <p style="margin:5px 0; color:#333;"><strong>Диагноз:</strong> F84.0 - Детский аутизм</p>
+          </div>
+          <div style="background:#fff5f5; padding:20px; margin-bottom:15px; border-radius:8px; border-left:5px solid #e74c3c; border:1px solid #e74c3c;">
+            <h3 style="font-size:1.2em; margin:0 0 10px 0; color:#333;">1. M-CHAT-R: Скрининг аутизма</h3>
+            <div style="font-size:2em; font-weight:bold; color:#667eea; margin:10px 0;">Высокий риск</div>
+            <div style="color:#666; line-height:1.6;">5/20 вопросов указывают на риск РАС</div>
+            <div style="background:#e8f4f8; padding:15px; border-radius:8px; margin-top:15px; border-left:4px solid #3498db;">
+              <strong>Рекомендация:</strong><br>Необходимо проведение ADOS-2.
+            </div>
+          </div>
+          <div style="background:#f0fff4; padding:20px; margin-bottom:15px; border-radius:8px; border-left:5px solid #27ae60; border:1px solid #27ae60;">
+            <h3 style="font-size:1.2em; margin:0 0 10px 0; color:#333;">2. FAST: Функция поведения</h3>
+            <div style="font-size:2em; font-weight:bold; color:#667eea; margin:10px 0;">Внимание</div>
+            <div style="color:#666; line-height:1.6;">Доминирующая функция: внимание (3 вопроса)</div>
+          </div>
+        </div>
+      `;
+
+        const el = document.createElement("div");
+        el.innerHTML = html;
+        el.style.position = "fixed";
+        el.style.top = "50%";
+        el.style.left = "50%";
+        el.style.transform = "translate(-50%, -50%)";
+        el.style.zIndex = "9999";
+        el.style.maxHeight = "90vh";
+        el.style.overflowY = "auto";
+        el.style.background = "white";
+        el.style.boxShadow = "0 0 50px rgba(0,0,0,0.5)";
+
+        document.body.appendChild(el);
+        log("Контейнер создан и показан на экране");
+
+        await new Promise((r) => setTimeout(r, 1000));
+
+        try {
+          await createPDF(el, "test3_realny_otchet.pdf");
+          document.body.removeChild(el);
+          alert(
+            "✅ Тест 3 пройден! Проверьте файл test3_realny_otchet.pdf - это как реальный отчёт",
+          );
+        } catch (err) {
+          document.body.removeChild(el);
+          alert("❌ Тест 3 провален: " + err.message);
+        }
+      }
+
+      // Проверка загрузки библиотеки
+      window.onload = function () {
+        if (typeof html2pdf === "undefined") {
+          log("❌ ОШИБКА: html2pdf библиотека не загружена!", "error");
+          alert(
+            "❌ Библиотека html2pdf не загрузилась. Проверьте интернет соединение.",
+          );
+        } else {
+          log("✅ html2pdf библиотека загружена успешно", "success");
+          log("Готов к тестированию. Нажмите любую кнопку.");
+        }
+      };
+    </script>
+  </body>
+</html>

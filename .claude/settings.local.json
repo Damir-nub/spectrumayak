@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p .claude)",
+      "Bash(mkdir -p .claude/playwright-recordings)",
+      "Bash(npx create-next-app@latest . --typescript --tailwind --app --no-src --import-alias \"@/*\" --use-npm --yes)",
+      "Bash(npx prisma *)",
+      "Bash(curl -s http://localhost:3000)",
+      "Bash(curl -s http://localhost:3001)",
+      "Bash(curl -s http://localhost:3002)",
+      "Read(//tmp/**)",
+      "Bash(start http://localhost:3003)"
+    ]
+  }
+}

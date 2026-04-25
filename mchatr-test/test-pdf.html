@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>СпектраМаяк - Тест PDF</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        padding: 20px;
+      }
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+      }
+      .btn {
+        padding: 12px 30px;
+        border: none;
+        border-radius: 25px;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+      }
+      .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Тест генерации PDF</h1>
+      <p>Нажмите кнопку для генерации тестового PDF файла</p>
+      <button class="btn" onclick="generateTestPDF()">Создать PDF</button>
+      <div id="test-content" style="display: none">
+        <h1>СпектраМаяк - Тестовый отчёт</h1>
+        <p>
+          Дата:
+          <script>
+            document.write(new Date().toLocaleDateString("ru-RU"));
+          </script>
+        </p>
+        <h2>Информация о ребёнке</h2>
+        <p><strong>ФИО:</strong> Тестовый ребёнок</p>
+        <p><strong>Возраст:</strong> 3 года</p>
+        <p><strong>Пол:</strong> Мужской</p>
+        <h2>Результаты M-CHAT-R</h2>
+        <p>Баллы: 2/20</p>
+        <p>Риск: Низкий</p>
+        <h2>Интегрированная рекомендация</h2>
+        <p>Это тестовая рекомендация для проверки генерации PDF.</p>
+        <ul>
+          <li>Рекомендация 1</li>
+          <li>Рекомендация 2</li>
+          <li>Рекомендация 3</li>
+        </ul>
+      </div>
+    </div>
+
+    <script>
+      function generateTestPDF() {
+        console.log("Начинаю генерацию тестового PDF...");
+
+        const element = document.getElementById("test-content");
+        element.style.display = "block";
+
+        console.log("HTML контент:", element.innerHTML.length, "символов");
+
+        const opt = {
+          margin: 10,
+          filename: "Тест_СпектраМаяк.pdf",
+          image: { type: "jpeg", quality: 0.98 },
+          html2canvas: { scale: 2 },
+          jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+        };
+
+        html2pdf()
+          .set(opt)
+          .from(element)
+          .save()
+          .then(() => {
+            console.log("PDF создан!");
+            element.style.display = "none";
+            alert("PDF успешно создан!");
+          })
+          .catch((err) => {
+            console.error("Ошибка:", err);
+            element.style.display = "none";
+            alert("Ошибка: " + err.message);
+          });
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,45 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c \"CMD=$(echo $TOOL_INPUT | jq -r '.command // empty'); echo \\\"$CMD\\\" | grep -qE '(git push.*(main|master)|rm -rf /|DROP TABLE)' && echo 'BLOCKED: Use feature branch / safe alternative.' >&2 && exit 2 || exit 0\""
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -c \"CONTENT=$(echo $TOOL_INPUT | jq -r '.content // empty'); echo \\\"$CONTENT\\\" | grep -qiP '(api.?key|secret|password)\\s*=\\s*[\\x27\\\"]{10,}' && echo 'BLOCKED: Hardcoded secret. Use env vars.' >&2 && exit 2 || exit 0\""
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npx prettier --write \"$FILE_PATH\" 2>/dev/null || true"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "You are a JSON-only evaluator. Respond ONLY with raw JSON, no markdown.\n\nReview the assistant's final response. Reject if:\n- Rationalizing incomplete work ('pre-existing', 'out of scope', 'follow-up')\n- Listing problems without fixing them\n- Skipping test/lint failures with excuses\n- Making changes unrelated to the stated problem ('code for code's sake')\n- Claiming completion without running verification gates\n\nRespond: {\"ok\": false, \"reason\": \"[issue]. Go back and finish.\"}\nor: {\"ok\": true}"
+          }
+        ]
+      }
+    ]
+  }
+}
