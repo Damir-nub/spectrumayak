@@ -3298,9 +3298,6 @@
           `;
           document.body.appendChild(loadingDiv);
 
-          // Создаём клон элемента для PDF (чтобы не модифицировать оригинал)
-          const contentClone = resultsElement.cloneNode(true);
-
           // Создаём временный контейнер для генерации PDF
           const pdfContainer = document.createElement("div");
           pdfContainer.style.cssText = `
@@ -3313,8 +3310,7 @@
           `;
 
           // Добавляем заголовок протокола
-          const header = document.createElement("div");
-          header.innerHTML = `
+          pdfContainer.innerHTML = `
             <div style="text-align: center; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 2px solid #3498db;">
               <h1 style="color: #2c3e50; font-size: 24px; margin-bottom: 10px;">Протокол диагностики</h1>
               <h2 style="color: #3498db; font-size: 18px;">Система СпектраМаяк</h2>
@@ -3322,10 +3318,8 @@
                 Дата: ${assessmentDate} | Ребёнок: ${childName}
               </p>
             </div>
+            ${resultsElement.innerHTML}
           `;
-
-          pdfContainer.appendChild(header);
-          pdfContainer.appendChild(contentClone);
           document.body.appendChild(pdfContainer);
 
           // Генерируем и скачиваем PDF с использованием надежного метода
