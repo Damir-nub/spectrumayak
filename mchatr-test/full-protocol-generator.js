@@ -32,7 +32,11 @@ const FullProtocolGenerator = {
         qabfResults,
         masResults,
       ),
-      sensoryDiet: this._generateSensoryDiet(sensoryProfile, masResults),
+      sensoryDiet: this._generateSensoryDiet(
+        sensoryProfile,
+        masResults,
+        childInfo,
+      ),
       developmentalPlan: this._generateDevelopmentalPlan(
         mchatrResults,
         scqResults,
@@ -212,35 +216,62 @@ const FullProtocolGenerator = {
   _adaptSchedule(baseSchedule, issues) {
     const adapted = JSON.parse(JSON.stringify(baseSchedule)); // Deep copy
 
-    // Если проблемы со сном
+    // Если проблемы со сном - АДАПТИРУЕМ САМ РЕЖИМ
     if (issues.sleepIssues) {
       adapted.sleep.preSleepRoutine = [
-        "За 1 час: выключить яркий свет",
-        "За 45 мин: тёплая ванна (36-37°C)",
-        "За 30 мин: массаж, лёгкие поглаживания",
-        "За 15 мин: тихая музыка или бел шум",
-        "Песенка/колыбельная (одна и та же)",
-        "Сон",
+        "🌙 За 1 час: выключить яркий свет, приглушить звуки",
+        "🛁 За 45 мин: тёплая ванна (36-37°C) с успокаивающими средствами (лаванда, ромашка)",
+        "💆 За 30 мин: массаж, лёгкие поглаживания, утяжелённое одеяло",
+        "🎵 За 15 мин: тихая музыка или белый шум",
+        "📖 Песенка/колыбельная (одна и та же каждый вечер)",
+        "😴 Сон",
       ];
+
+      // Ранний уклад (на 1 час раньше)
+      if (adapted.sleep.night && adapted.sleep.night.includes("-")) {
+        const [start, end] = adapted.sleep.night.split(" - ");
+        const [startHour, startMin] = start.split(":").map(Number);
+        const newStartHour = startHour - 1;
+        adapted.sleep.night = `${newStartHour}:${startMin.toString().padStart(2, "0")} - ${end}`;
+        adapted.sleep.note = "⚠️ Ранний уклад на 1 час из-за проблем со сном";
+      }
     }
 
-    // Если сенсорные проблемы
-    if (issues.sensoryIssues.length > 0) {
+    // Если сенсорные проблемы - АДАПТИРУЕМ АКТИВНОСТИ
+    if (issues.sensoryIssues && issues.sensoryIssues.length > 0) {
       adapted.sensoryBreaks = [
-        "Каждые 2 часа - 10 мин сенсорный перерыв",
-        "Если гиперчувствительность: тихое место, минимум стимулов",
-        "Если гипочувствительность: активная деятельность, прыжки, качели",
+        "🧘 Каждые 2 часа - 10 мин сенсорный перерыв",
+        "🔇 Если гиперчувствительность: тихое место, минимум стимулов, наушники",
+        "🏃 Если гипочувствительность: активная деятельность, прыжки, качели, утяжелённые предметы",
       ];
+
+      // Добавляем сенсорные перерывы в утренние активности
+      if (adapted.activities && adapted.activities.morning) {
+        adapted.activities.morningNotes = [
+          "⚠️ Распорядок адаптирован под сенсорные проблемы:",
+          `• Проблемы: ${issues.sensoryIssues.join(", ")}`,
+          "• Включены регулярные сенсорные перерывы",
+          "• Используются calming strategies при перегрузке",
+        ];
+      }
     }
 
-    // Если проблемы с вниманием
+    // Если проблемы с вниманием - АДАПТИРУЕМ ДЛИТЕЛЬНОСТЬ ЗАНЯТИЙ
     if (issues.attentionIssues) {
       adapted.activityStructure = [
-        "Каждое занятие 15-20 минут",
-        "Перерывы 5-10 минут между занятиями",
-        "Использовать таймер (визуальный)",
-        "Чередовать активные и спокойные деятельности",
+        "⏱️ Каждое занятие 15-20 минут (максимум!)",
+        "☕ Перерывы 5-10 минут между занятиями",
+        "⏰ Использовать визуальный таймер",
+        "🔄 Чередовать активные и спокойные деятельности",
       ];
+
+      // Корректируем активности с учётом коротких занятий
+      if (adapted.activities && adapted.activities.morning) {
+        adapted.activities.morningNotes = adapted.activities.morningNotes || [];
+        adapted.activities.morningNotes.push(
+          "⚠️ Занятия укорочены до 15-20 минут из-за проблем с вниманием",
+        );
+      }
     }
 
     return adapted;
@@ -511,7 +542,7 @@ const FullProtocolGenerator = {
   },
 
   // Генерация сенсорной диеты
-  _generateSensoryDiet(sensoryProfile, masResults) {
+  _generateSensoryDiet(sensoryProfile, masResults, childInfo) {
     if (!sensoryProfile) {
       return {
         note: "Сенсорный профиль не заполнен. Рекомендуется пройти сенсорную оценку.",
@@ -521,192 +552,558 @@ const FullProtocolGenerator = {
     const issues = sensoryProfile.issues || [];
     const hyperSensitive = sensoryProfile.hyperSensitive || [];
     const hypoSensitive = sensoryProfile.hypoSensitive || [];
+    const seeking = sensoryProfile.seeking || [];
+
+    // Определяем возраст для адаптации (берём из childInfo или используем дефолт)
+    const ageMonths = parseInt(childInfo?.ageMonths) || 36;
 
     return {
       morningRoutine: this._getSensoryMorningRoutine(
         hyperSensitive,
         hypoSensitive,
+        seeking,
+        ageMonths,
       ),
       throughoutDay: this._getSensoryThroughoutDay(
         issues,
         hyperSensitive,
         hypoSensitive,
+        seeking,
       ),
       eveningRoutine: this._getSensoryEveningRoutine(
         hyperSensitive,
         hypoSensitive,
+        seeking,
       ),
       specificActivities: this._getSpecificSensoryActivities(
         hyperSensitive,
         hypoSensitive,
+        seeking,
       ),
-      equipment: this._getSensoryEquipment(hyperSensitive, hypoSensitive),
+      equipment: this._getSensoryEquipment(
+        hyperSensitive,
+        hypoSensitive,
+        seeking,
+        ageMonths,
+      ),
+      // Добавляем краткое описание сенсорного профиля
+      profileSummary: this._getSensoryProfileSummary(
+        hyperSensitive,
+        hypoSensitive,
+        seeking,
+      ),
     };
   },
 
+  // Краткое описание сенсорного профиля
+  _getSensoryProfileSummary(hyper, hypo, seeking) {
+    const summary = [];
+
+    if (hyper.length > 0) {
+      const modalityNames = {
+        auditory: "звуков",
+        visual: "света",
+        tactile: "тактильных ощущений",
+        oral: "вкуса",
+        vestibular: "движения",
+        proprioceptive: "давления",
+        olfactory: "запахов",
+      };
+      const hyperModality = hyper.map((m) => modalityNames[m] || m).join(", ");
+      summary.push(`Гиперчувствительность к: ${hyperModality}`);
+    }
+
+    if (hypo.length > 0) {
+      const modalityNames = {
+        auditory: "звукам",
+        visual: "зрительным стимулам",
+        tactile: "тактильным стимулам",
+        oral: "оральным стимулам",
+        vestibular: "движению",
+        proprioceptive: "проприоцепции",
+        olfactory: "запахам",
+      };
+      const hypoModality = hypo.map((m) => modalityNames[m] || m).join(", ");
+      summary.push(`Гипочувствительность к: ${hypoModality}`);
+    }
+
+    if (seeking.length > 0) {
+      const modalityNames = {
+        auditory: "звуковыми",
+        visual: "визуальными",
+        tactile: "тактильными",
+        oral: "оральными",
+        vestibular: "движением",
+        proprioceptive: "проприоцептивными",
+        olfactory: "запахами",
+      };
+      const seekingModality = seeking
+        .map((m) => modalityNames[m] || m)
+        .join(", ");
+      summary.push(`Активный поиск: ${seekingModality}`);
+    }
+
+    return summary;
+  },
+
   // Утренняя сенсорная рутина
-  _getSensoryMorningRoutine(hyper, hypo) {
+  _getSensoryMorningRoutine(hyper, hypo, seeking, ageMonths) {
     const routine = [];
 
-    // Проприоцептивная (глубокое давление) для всех
+    // 1. Проприоцептивная (глубокое давление) для всех - адаптировано под возраст
+    const proprioActivity =
+      ageMonths < 36
+        ? "Массаж и поглаживания"
+        : seeking.includes("proprioceptive")
+          ? "Активная растяжка и глубокое давление"
+          : "Утренняя растяжка и массаж";
+
+    const proprioDesc =
+      ageMonths < 36
+        ? "Поглаживания спины, ручек, ножек. Лёгкие сдавливания."
+        : seeking.includes("proprioceptive")
+          ? "Интенсивные растяжки, отжимания от стены, глубокое давление через полотенце."
+          : "Поглаживания спины, ручек, ножек. Лёгкие растяжения.";
+
     routine.push({
       time: "7:00-7:15",
-      activity: "Утренняя растяжка и массаж",
-      description: "Поглаживания спины, ручек, ножек. Лёгкие растяжения.",
+      activity: proprioActivity,
+      description: proprioDesc,
     });
 
-    // Вестибулярная
-    if (hypo.includes("vestibular") || !hyper.includes("vestibular")) {
+    // 2. Вестибулярная - адаптировано под профиль
+    if (hyper.includes("vestibular")) {
+      // Гиперчувствительность - мягкие упражнения
       routine.push({
         time: "7:15-7:20",
-        activity: "Вестибулярные упражнения",
-        description: "Качели на фитболе, лёгкие покачивания, наклоны.",
+        activity: "Мягкие вестибулярные упражнения",
+        description:
+          "Медленные покачивания на фитболе. Не вращать! Предупреждать перед движением.",
+      });
+    } else if (hypo.includes("vestibular") || seeking.includes("vestibular")) {
+      // Гипочувствительность или поиск - интенсивные упражнения
+      routine.push({
+        time: "7:15-7:25",
+        activity: "Активные вестибулярные упражнения",
+        description:
+          ageMonths < 36
+            ? "Качели, наклоны, лёгкие вращения."
+            : "Кувырки, вращение на фитболе, балансировка, прыжки.",
       });
     }
 
-    // Тактильная
+    // 3. Тактильная - адаптировано под профиль
+    const tactileDesc = hyper.includes("tactile")
+      ? "Мягкая губка, тёплая вода. Предупреждайте перед каждым касанием. Постепенное знакомство с текстурами."
+      : hypo.includes("tactile") || seeking.includes("tactile")
+        ? "Массаж щёткой, контрастный душ, разные текстуры полотенец."
+        : "Массаж щёткой, разные текстуры полотенец.";
+
     routine.push({
-      time: "7:20-7:30",
+      time: ageMonths < 36 ? "7:25-7:35" : "7:25-7:40",
       activity: "Гигиенические процедуры",
-      description: hyper.includes("tactile")
-        ? "Используйте мягкую губку, тёплую воду. Предупреждайте перед касаниями."
-        : "Массаж щёткой, разные текстуры полотенец.",
+      description: tactileDesc,
     });
+
+    // 4. Оральная стимуляция (если есть проблемы)
+    if (hyper.includes("oral") || seeking.includes("oral")) {
+      routine.push({
+        time: ageMonths < 36 ? "7:35-7:40" : "7:40-7:45",
+        activity: "Оральная моторика",
+        description: hyper.includes("oral")
+          ? "Предлагайте едуroom temperature. Не принуждайте к новым текстурам."
+          : "Твёрдая пища для жевания (морковь, яблоко), сосание через трубочку.",
+      });
+    }
+
+    // 5. Аудиальная/визуальная подготовка (если гиперчувствительность)
+    if (hyper.includes("auditory") || hyper.includes("visual")) {
+      routine.push({
+        time: ageMonths < 36 ? "7:40-7:45" : "7:45-7:50",
+        activity: "Подготовка к дню",
+        description:
+          hyper.includes("auditory") && hyper.includes("visual")
+            ? "Тихая музыка, затемнённый свет. Постепенное увеличение яркости и громкости."
+            : hyper.includes("auditory")
+              ? "Тихая музыка или белый шум. Избегайте резких звуков."
+              : "Яркий свет, но без мигания. Предупреждайте о смене освещения.",
+      });
+    }
 
     return routine;
   },
 
   // Сенсорные активности в течение дня
-  _getSensoryThroughoutDay(issues, hyper, hypo) {
+  _getSensoryThroughoutDay(issues, hyper, hypo, seeking) {
+    const every2Hours = ["10 минут сенсорного перерыва"];
+
+    // Аудиальная адаптация
+    if (hyper.includes("auditory")) {
+      every2Hours.push("Тихое место, минимум шума");
+      every2Hours.push("Шумоподавляющие наушники в шумных местах");
+    } else if (seeking.includes("auditory")) {
+      every2Hours.push("Музыкальные паузы, звуки природы");
+      every2Hours.push("Звуковые игры: хлопки, инструменты");
+    } else {
+      every2Hours.push("Спокойная музыка или звуки природы");
+    }
+
+    // Визуальная адаптация
+    if (hyper.includes("visual")) {
+      every2Hours.push("Затемнить комнату, убрать яркие игрушки");
+      every2Hours.push("Минимум визуальных стимулов");
+    } else if (seeking.includes("visual")) {
+      every2Hours.push("Световые игрушки, яркие цвета");
+      every2Hours.push("Визуальные стимулы для фокусировки");
+    }
+
+    // Проприоцептивная активность (для всех, но адаптировано)
+    if (seeking.includes("proprioceptive") || hypo.includes("proprioceptive")) {
+      every2Hours.push(
+        "Интенсивная проприоцептивная активность: отжимания от стены, подтягивания, перенос тяжестей",
+      );
+    } else {
+      every2Hours.push(
+        "Лёгкая проприоцептивная активность: отжимания от стены, растяжки",
+      );
+    }
+
+    // Вестибулярная адаптация
+    if (hyper.includes("vestibular")) {
+      every2Hours.push("Минимум движений, спокойные игры");
+    } else if (seeking.includes("vestibular") || hypo.includes("vestibular")) {
+      every2Hours.push("Вестибулярные перерывы: качели, вращение, прыжки");
+    }
+
+    const heavyWork = [
+      "Перенос игрушек/книг",
+      "Открывание/закрывание дверей",
+      "Лёгкие домашние дела: подмести, протереть стол",
+    ];
+
+    // Добавляем интенсивную работу если нужно
+    if (seeking.includes("proprioceptive")) {
+      heavyWork.push("Перенос тяжестей (книги, продукты)");
+      heavyWork.push("Отжимания, приседания");
+    }
+
+    const oralMotor = [];
+    if (hyper.includes("oral")) {
+      oralMotor.push("Мягкая пищаroom temperature");
+      oralMotor.push("Избегать грубых текстур");
+    } else if (seeking.includes("oral") || hypo.includes("oral")) {
+      oralMotor.push("Твёрдая пища: морковь, яблоко");
+      oralMotor.push("Сосание через трубочку");
+      oralMotor.push("Жевательная резинка (если возраст позволяет)");
+    }
+
     return {
-      every2Hours: [
-        "10 минут сенсорного перерыва",
-        hyper.includes("auditory")
-          ? "Тихое место, минимум шума"
-          : "Музыка, звуки природы",
-        hyper.includes("visual")
-          ? "Затемнить, убрать яркие игрушки"
-          : "Яркие цвета, световые игрушки",
-        "Проприоцептивная активность: отжимания от стены, подтягивания",
-      ],
-      heavyWork: [
-        "Перенос игрушек/книг",
-        "Открывание/закрывание дверей",
-        "Лёгкие домашние дела: подмести, протереть стол",
-      ],
-      oralMotor: [
-        "Твёрдая пища: морковь, яблоко",
-        "Сосание через трубочку",
-        "Жевательная резинка (если возраст позволяет)",
-      ],
+      every2Hours,
+      heavyWork,
+      oralMotor:
+        oralMotor.length > 0 ? oralMotor : ["Твёрдая пища для жевания"],
     };
   },
 
   // Вечерняя сенсорная рутина
-  _getSensoryEveningRoutine(hyper, hypo) {
-    return [
-      {
-        time: "19:00-19:15",
-        activity: "Тёплая ванна",
-        description: "36-37°C. Пену, игрушки. Не плескаться активно.",
-      },
-      {
-        time: "19:15-19:25",
-        activity: "Массаж",
-        description: "Спокойный массаж с лёгким давлением. Спина, плечи, руки.",
-      },
-      {
-        time: "19:25-19:30",
-        activity: "Кальцинирование / спокойная деятельность",
-        description: "Тихая музыка, бел шум. Минимум визуальных стимулов.",
-      },
-    ];
+  _getSensoryEveningRoutine(hyper, hypo, seeking) {
+    const routine = [];
+
+    // 1. Тёплая ванна - адаптирована под сенсорный профиль
+    let bathDesc = "36-37°C.";
+
+    if (hyper.includes("tactile")) {
+      bathDesc +=
+        " Мягкая губка, плавные движения. Постепенное привыкание к воде.";
+    } else if (seeking.includes("tactile")) {
+      bathDesc += " Разные текстуры: губка, мочалка, пенка. Массаж в воде.";
+    } else {
+      bathDesc += " Пену, игрушки. Не плескаться активно.";
+    }
+
+    if (hyper.includes("vestibular")) {
+      bathDesc += " Поддерживайте голову, избегайте резких движений.";
+    }
+
+    routine.push({
+      time: "19:00-19:15",
+      activity: "Тёплая ванна",
+      description: bathDesc,
+    });
+
+    // 2. Массаж - адаптирован под профиль
+    let massageDesc = "";
+
+    if (hyper.includes("tactile")) {
+      massageDesc =
+        "Очень лёгкий массаж, поглаживания. Предупреждайте перед касанием. Постепенно увеличивайте давление.";
+    } else if (
+      seeking.includes("proprioceptive") ||
+      hypo.includes("proprioceptive")
+    ) {
+      massageDesc =
+        "Интенсивный массаж с глубоким давлением. Растирание, сдавливание мышц. Утяжелённое одеяло.";
+    } else {
+      massageDesc = "Спокойный массаж с лёгким давлением. Спина, плечи, руки.";
+    }
+
+    routine.push({
+      time: "19:15-19:25",
+      activity: "Массаж",
+      description: massageDesc,
+    });
+
+    // 3. Кальцинирование - адаптировано под профиль
+    let calmingDesc = "";
+
+    if (hyper.includes("auditory")) {
+      calmingDesc =
+        "Бел шум, тихая музыка. Минимум звуков. Шумоподавляющие наушники если нужно.";
+    } else if (seeking.includes("auditory")) {
+      calmingDesc = "Музыка, звуки природы. Пение колыбельной.";
+    } else {
+      calmingDesc = "Тихая музыка или белый шум.";
+    }
+
+    if (hyper.includes("visual")) {
+      calmingDesc +=
+        " Затемнённая комната, минимум визуальных стимулов. Ночной свет.";
+    } else if (seeking.includes("visual")) {
+      calmingDesc += " Мягкий свет, световые проекции.";
+    } else {
+      calmingDesc += " Минимум визуальных стимулов.";
+    }
+
+    if (seeking.includes("vestibular") || hypo.includes("vestibular")) {
+      calmingDesc += " Лёгкие покачивания на фитболе или в гамаке.";
+    }
+
+    routine.push({
+      time: "19:25-19:30",
+      activity: "Успокоительная деятельность",
+      description: calmingDesc,
+    });
+
+    return routine;
   },
 
   // Специфические сенсорные активности
-  _getSpecificSensoryActivities(hyper, hypo) {
+  _getSpecificSensoryActivities(hyper, hypo, seeking) {
     const activities = {};
 
+    // Вестибулярная
     if (hyper.includes("vestibular")) {
       activities.vestibular = [
-        "Лёгкие покачивания",
-        "Медленные качели",
+        "Лёгкие покачивания (медленно)",
+        "Медленные качели без вращения",
         "Избегать быстрой смены положения",
-        "Предупреждать перед изменением положения",
+        "Обязательно предупреждать перед изменением положения",
+        "Не подбрасывать, не вращать",
       ];
-    } else if (hypo.includes("vestibular")) {
+    } else if (seeking.includes("vestibular") || hypo.includes("vestibular")) {
       activities.vestibular = [
-        "Активные качели",
-        "Кувырки, вращение",
-        "Прыжки на фитболе",
-        "Балансировочные упражнения",
+        "Активные качели с вращением",
+        "Кувырки, вращение на фитболе",
+        "Прыжки на батуте/фитболе",
+        "Балансировочные упражнения (доска, бревно)",
+        "Лазание, альпинистская стенка",
+      ];
+    } else {
+      activities.vestibular = [
+        "Лёгкие покачивания",
+        "Качели (умеренно)",
+        "Наклоны, повороты",
       ];
     }
 
+    // Тактильная
     if (hyper.includes("tactile")) {
       activities.tactile = [
-        "Предупреждать перед касанием",
-        "Использовать мягкую одежду без швов",
-        "Гладкие ткани в одежде и постельном белье",
-        "Постепенное знакомство с новыми текстурами",
+        "Всегда предупреждать перед касанием",
+        "Использовать мягкую одежду без швов и этикеток",
+        "Гладкие ткани в одежде и постельном белье (хлопок, сатин)",
+        "Постепенное знакомство с новыми текстурами (по 1-2 минуты)",
+        "Не принуждать к грязным играм, предлагать альтернативы",
       ];
-    } else if (hypo.includes("tactile")) {
+    } else if (seeking.includes("tactile") || hypo.includes("tactile")) {
       activities.tactile = [
-        "Массаж щёткой",
-        "Разные текстуры: песок, вода, крупы",
-        "Тактильные игры: лего, пластилин",
-        "Обнимания, глубокое давление",
+        "Массаж щёткой (Wilbarger protocol если обучен)",
+        "Тактильные игры: песок, вода, крупы, глина",
+        "Лего, конструкторы, пластилин",
+        "Обнимания, глубокое давление (roll в одеяле)",
+        "Тактильные панели, коврики с разными текстурами",
+      ];
+    } else {
+      activities.tactile = [
+        "Разнообразные текстуры в играх",
+        "Массаж поглаживанием",
       ];
     }
 
+    // Аудиальная
     if (hyper.includes("auditory")) {
       activities.auditory = [
-        "Тихая среда",
-        "Шумоподавляющие наушники в шумных местах",
-        "Предупреждать перед громкими звуками",
+        "Тихая среда дома, минимум бытового шума",
+        "Шумоподавляющие наушники в шумных местах (магазины, транспорт)",
+        "Всегда предупреждать перед громкими звуками",
         "Бел шум для маскировки неожиданных звуков",
+        "Избегать мест с громкой музыкой, криками",
       ];
-    } else if (hypo.includes("auditory")) {
+    } else if (seeking.includes("auditory") || hypo.includes("auditory")) {
       activities.auditory = [
-        "Музыкальные игрушки",
-        "Звуковые игры",
-        "Различные типы звуков",
+        "Музыкальные игрушки и инструменты",
+        "Звуковые игры: хлопки, топот, голосовые",
+        "Различные типы звуков для стимуляции",
         "Пение, музыкальные занятия",
+        "Звуковые книги, аудиосказки",
       ];
+    } else {
+      activities.auditory = ["Спокойная музыка", "Звуки природы"];
+    }
+
+    // Визуальная
+    if (hyper.includes("visual")) {
+      activities.visual = [
+        "Минимум ярких визуальных стимулов",
+        "Приглушённый свет, солнцезащитные очки на улице",
+        "Организованные пространства без визуального хаоса",
+        "Предупреждать о смене освещения",
+        "Затемняющие шторы в спальне",
+      ];
+    } else if (seeking.includes("visual")) {
+      activities.visual = [
+        "Яркие игрушки, световые панели",
+        "Визуальные расписания с картинками",
+        "Цветовое кодирование",
+        "Световые проекты, визуальные стимуляции",
+      ];
+    }
+
+    // Оральная
+    if (hyper.includes("oral")) {
+      activities.oral = [
+        "Постепенное знакомство с новыми текстурами еды",
+        "Едаroom temperature, не горячая/холодная",
+        "Отдельные компоненты на тарелке (не смешивать)",
+        "Не принуждать к еде, уважать отказ",
+      ];
+    } else if (seeking.includes("oral")) {
+      activities.oral = [
+        "Твёрдая пища для жевания (морковь, яблоко, сухарики)",
+        "Сосание через трубочку",
+        "Жевательная резинка (если возраст позволяет)",
+        "Вибрационные игрушки для рта",
+      ];
+    }
+
+    // Проприоцептивная
+    if (seeking.includes("proprioceptive") || hypo.includes("proprioceptive")) {
+      activities.proprioceptive = [
+        "Интенсивное глубокое давление (roll в одеяле, сэндвич)",
+        "Отжимания (от стены, от пола)",
+        "Перенос тяжестей (книги, пакеты)",
+        "Утяжелённый жилет/одеяло (10-15% веса)",
+        "Прыжки, бег, лазание",
+      ];
+    } else if (hyper.includes("proprioceptive")) {
+      activities.proprioceptive = [
+        "Лёгкое глубокое давление",
+        "Утяжелённое одеяло (5-10% веса)",
+        "Обнимания по запросу",
+        "Спокойные растяжки",
+      ];
+    } else {
+      activities.proprioceptive = ["Обнимания", "Лёгкое давление"];
     }
 
     return activities;
   },
 
   // Сенсорное оборудование
-  _getSensoryEquipment(hyper, hypo) {
+  _getSensoryEquipment(hyper, hypo, seeking, ageMonths = 36) {
     const equipment = [];
 
-    // Для всех
-    equipment.push(
-      "Фитбол (большой мяч для упражнений)",
-      "Утяжелённое одеяло (10% веса ребёнка)",
-      "Сенсорные игрушки (разные текстуры)",
-    );
+    // Базовое оборудование для всех
+    equipment.push("Фитбол (большой мяч для упражнений)");
 
-    if (hyper.includes("tactile") || hypo.includes("tactile")) {
+    // Утяжелённое одеяло - вес зависит от профиля
+    if (seeking.includes("proprioceptive") || hypo.includes("proprioceptive")) {
+      equipment.push("Утяжелённое одеяло (10-15% веса ребёнка)");
+      equipment.push("Утяжелённый жилет (если позволяет возраст)");
+    } else if (hyper.includes("proprioceptive")) {
+      equipment.push("Лёгкое утяжелённое одеяло (5-10% веса ребёнка)");
+    } else {
+      equipment.push("Утяжелённое одеяло (10% веса ребёнка)");
+    }
+
+    // Тактильное оборудование
+    if (hyper.includes("tactile")) {
+      equipment.push("Мягкая одежда без швов (бельё, футболки)");
+      equipment.push("Натуральные ткани (хлопок, бамбук)");
+    } else if (seeking.includes("tactile") || hypo.includes("tactile")) {
       equipment.push("Массажная щётка (soft)");
       equipment.push("Тактильные панели, коврики");
+      equipment.push("Сенсорные коробки (песок, крупы, вода)");
+      equipment.push("Игрушки с разными текстурами");
+    } else {
+      equipment.push("Сенсорные игрушки (разные текстуры)");
     }
 
-    if (hyper.includes("vestibular") || hypo.includes("vestibular")) {
-      equipment.push("Качели, гамак");
+    // Вестибулярное оборудование
+    if (hyper.includes("vestibular")) {
+      equipment.push("Стационарные качели (без вращения)");
+      equipment.push("Гамак для спокойных покачиваний");
+    } else if (seeking.includes("vestibular") || hypo.includes("vestibular")) {
+      equipment.push("Качели (с возможностью вращения)");
+      equipment.push("Батут (малый/средний)");
       equipment.push("Балансировочная доска");
+      equipment.push("Спиннер/вращающийся диск");
+    } else {
+      equipment.push("Качели, гамак");
     }
 
+    // Аудиальное оборудование
     if (hyper.includes("auditory")) {
       equipment.push("Шумоподавляющие наушники");
       equipment.push("Бел шум машина");
+      equipment.push("Беруши (для экстренных случаев)");
+    } else if (seeking.includes("auditory")) {
+      equipment.push("Музыкальные инструменты (ксилофон, барабан)");
+      equipment.push("Звуковые игрушки");
+      equipment.push("Колокольчики, погремушки");
     }
 
+    // Визуальное оборудование
     if (hyper.includes("visual")) {
       equipment.push("Солнцезащитные очки");
       equipment.push("Затемняющие шторы");
+      equipment.push("Ночной свет с регулятором яркости");
+    } else if (seeking.includes("visual")) {
+      equipment.push("Световые панели/проекторы");
+      equipment.push("Яркие визуальные стимулы");
+      equipment.push("Визуальный таймер");
+    }
+
+    // Оральное оборудование
+    if (seeking.includes("oral")) {
+      equipment.push("Трубочки для питья (разные диаметры)");
+      equipment.push("Жевательные игрушки (chewelry)");
+      if (ageMonths >= 36) {
+        equipment.push("Жевательная резинка (без сахара)");
+      }
+    }
+
+    // Проприоцептивное оборудование
+    if (seeking.includes("proprioceptive") || hypo.includes("proprioceptive")) {
+      equipment.push("Эспандеры, резинки для упражнений");
+      equipment.push("Гири/утяжелители (1-2 кг)");
+      equipment.push("Сэндвич-одеяло (для roll)");
+    }
+
+    // Оборудование для спокойной зоны
+    if (hyper.includes("auditory") || hyper.includes("visual")) {
+      equipment.push("Палатка/шатёр для уединения");
+      equipment.push("Специальный 'тихий уголок' с минимумом стимулов");
     }
 
     return equipment;
