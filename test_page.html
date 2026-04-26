@@ -2269,52 +2269,32 @@
 
         // Питание
         html += `<br><strong>🍽️ Питание:</strong> ${schedule.feeding.frequency}<br>`;
-        if (schedule.feeding.times && Array.isArray(schedule.feeding.times)) {
-          html += `Время: ${schedule.feeding.times.join(", ")}<br>`;
-        }
+        html += `Время: ${schedule.feeding.times.join(", ")}<br>`;
 
         // Активности
-        if (
-          schedule.activities &&
-          schedule.activities.morning &&
-          Array.isArray(schedule.activities.morning)
-        ) {
-          html += `<br><strong>🎯 Утренние активности:</strong><br>`;
-          html += `<ul style="margin-left: 20px;">`;
-          schedule.activities.morning.forEach((activity) => {
-            html += `<li>${activity}</li>`;
-          });
-          html += `</ul>`;
-        }
+        html += `<br><strong>🎯 Утренние активности:</strong><br>`;
+        html += `<ul style="margin-left: 20px;">`;
+        schedule.activities.morning.forEach((activity) => {
+          html += `<li>${activity}</li>`;
+        });
+        html += `</ul>`;
 
-        if (
-          schedule.activities &&
-          schedule.activities.afternoon &&
-          Array.isArray(schedule.activities.afternoon)
-        ) {
-          html += `<br><strong>🎯 Дневные активности:</strong><br>`;
-          html += `<ul style="margin-left: 20px;">`;
-          schedule.activities.afternoon.forEach((activity) => {
-            html += `<li>${activity}</li>`;
-          });
-          html += `</ul>`;
-        }
+        html += `<br><strong>🎯 Дневные активности:</strong><br>`;
+        html += `<ul style="margin-left: 20px;">`;
+        schedule.activities.afternoon.forEach((activity) => {
+          html += `<li>${activity}</li>`;
+        });
+        html += `</ul>`;
 
-        if (
-          schedule.activities &&
-          schedule.activities.evening &&
-          Array.isArray(schedule.activities.evening)
-        ) {
-          html += `<br><strong>🎯 Вечерние активности:</strong><br>`;
-          html += `<ul style="margin-left: 20px;">`;
-          schedule.activities.evening.forEach((activity) => {
-            html += `<li>${activity}</li>`;
-          });
-          html += `</ul>`;
-        }
+        html += `<br><strong>🎯 Вечерние активности:</strong><br>`;
+        html += `<ul style="margin-left: 20px;">`;
+        schedule.activities.evening.forEach((activity) => {
+          html += `<li>${activity}</li>`;
+        });
+        html += `</ul>`;
 
         // Дополнительные адаптации
-        if (schedule.sensoryBreaks && Array.isArray(schedule.sensoryBreaks)) {
+        if (schedule.sensoryBreaks) {
           html += `<br><strong>🌟 Сенсорные перерывы:</strong><br>`;
           html += `<ul style="margin-left: 20px;">`;
           schedule.sensoryBreaks.forEach((breakItem) => {
@@ -2323,10 +2303,7 @@
           html += `</ul>`;
         }
 
-        if (
-          schedule.activityStructure &&
-          Array.isArray(schedule.activityStructure)
-        ) {
+        if (schedule.activityStructure) {
           html += `<br><strong>📚 Структура занятий:</strong><br>`;
           html += `<ul style="margin-left: 20px;">`;
           schedule.activityStructure.forEach((struct) => {
@@ -2356,22 +2333,20 @@
         `;
 
         // Стратегии
-        if (plan.strategies && Array.isArray(plan.strategies)) {
-          html += `
+        html += `
                 <div class="result-block" style="border-left-color: #f39c12; background: #fffaf0;">
                     <div class="result-title">💡 Стратегии управления поведением</div>
                     <div class="result-description">
                         <ul style="margin-left: 20px;">
         `;
-          plan.strategies.forEach((strategy) => {
-            html += `<li>${strategy}</li>`;
-          });
-          html += `
+        plan.strategies.forEach((strategy) => {
+          html += `<li>${strategy}</li>`;
+        });
+        html += `
                         </ul>
                     </div>
                 </div>
-          `;
-        }
+        `;
 
         // Предупреждение (Antecedent)
         html += `
@@ -2396,16 +2371,9 @@
                     <div class="result-description">
                         <ul style="margin-left: 20px;">
         `;
-        if (
-          plan.consequenceStrategies &&
-          Array.isArray(plan.consequenceStrategies)
-        ) {
-          plan.consequenceStrategies.forEach((strategy) => {
-            html += `<li>${strategy}</li>`;
-          });
-        } else {
-          html += `<li>Нет данных</li>`;
-        }
+        plan.consequenceStrategies.forEach((strategy) => {
+          html += `<li>${strategy}</li>`;
+        });
         html += `
                         </ul>
                     </div>
@@ -2419,16 +2387,9 @@
                     <div class="result-description">
                         <ul style="margin-left: 20px;">
         `;
-        if (
-          plan.replacementBehaviors &&
-          Array.isArray(plan.replacementBehaviors)
-        ) {
-          plan.replacementBehaviors.forEach((behavior) => {
-            html += `<li>${behavior}</li>`;
-          });
-        } else {
-          html += `<li>Нет данных</li>`;
-        }
+        plan.replacementBehaviors.forEach((behavior) => {
+          html += `<li>${behavior}</li>`;
+        });
         html += `
                         </ul>
                     </div>
@@ -2443,17 +2404,9 @@
                         <strong>Протокол кризиса:</strong><br>
                         <ol style="margin-left: 20px;">
         `;
-        if (
-          plan.emergencyPlan &&
-          plan.emergencyPlan.crisisProtocol &&
-          Array.isArray(plan.emergencyPlan.crisisProtocol)
-        ) {
-          plan.emergencyPlan.crisisProtocol.forEach((step) => {
-            html += `<li>${step}</li>`;
-          });
-        } else {
-          html += `<li>Нет данных</li>`;
-        }
+        plan.emergencyPlan.crisisProtocol.forEach((step) => {
+          html += `<li>${step}</li>`;
+        });
         html += `
                         </ol>
                         <br><em>${plan.emergencyPlan.contactProfessional}</em>
