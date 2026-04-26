@@ -1540,12 +1540,19 @@
         ...Object.values(additionalMethods),
       ];
 
+      console.log("=== Загрузка данных ===");
+      console.log("methodsData.methods:", methodsData.methods.length);
+      console.log("additionalMethods:", Object.keys(additionalMethods).length);
+      console.log("Всего методик:", allMethods.length);
+
       // Текущие ответы
       let currentAnswers = {};
       let currentSection = 0;
 
       // Инициализация
       function init() {
+        console.log("=== Инициализация приложения ===");
+        console.log("Загружено методик:", allMethods.length);
         createNavigation();
         createSections();
         updateProgress();
