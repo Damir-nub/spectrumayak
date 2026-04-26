@@ -1645,7 +1645,7 @@
 
           method.questions.forEach((question, qIndex) => {
             const isCritical = question.critical || false;
-            const ageRange = question.ageRange || "all";
+            const ageRange = question.ageRange || question.age || "all";
             html += `
                         <div class="question ${isCritical ? "critical" : ""}"
                              data-question-id="${question.num}"
@@ -1714,7 +1714,7 @@
                 <div id="resultsContent"></div>
                 <div class="button-container">
                     <button class="btn btn-secondary" onclick="prevSection()">← Вернуться</button>
-                    <button class="btn btn-success" onclick="printReport()">🖨️ Печать/PDF</button>
+                    <button class="btn btn-success" onclick="generatePDF()">🖨️ Печать/PDF</button>
                 </div>
             `;
         container.appendChild(resultsSection);
@@ -1808,7 +1808,7 @@
 
             if (ageRange && ageRange !== "all") {
               // Парсим диапазон возраста (например, "16-30", "0-6м", "12-24м")
-              const match = ageRange.match(/(\d+)-(\d+)(м|mes|months)?/i);
+              const match = ageRange.match(/(\d+)-(\d+)(м|m|mes|months)?/i);
 
               if (match) {
                 const minAge = parseInt(match[1]);
@@ -2150,7 +2150,7 @@
           masResults: calculateMethodScore(allMethods.find(m => m.id === 'mas')),
           scqResults: calculateMethodScore(allMethods.find(m => m.id === 'scq')),
           sensoryProfile: calculateMethodScore(allMethods.find(m => m.id === 'sensory')),
-          developmentalMilestones: calculateMethodScore(allMethods.find(m => m.id === 'development')),
+          developmentalMilestones: calculateMethodScore(allMethods.find(m => m.id === 'milestones')),
           briefResults: calculateMethodScore(allMethods.find(m => m.id === 'brief')),
           connersResults: calculateMethodScore(allMethods.find(m => m.id === 'conners'))
         };
