@@ -3298,52 +3298,31 @@
           `;
           document.body.appendChild(loadingDiv);
 
-          // Создаём временный контейнер для генерации PDF (прямо на странице)
-          const pdfContainer = document.createElement("div");
-          pdfContainer.id = "pdf-generating-container";
-          pdfContainer.style.cssText = `
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 794px;
-            background: white;
-            padding: 40px;
-            z-index: 10001;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-            border-radius: 8px;
-          `;
-
-          // Добавляем заголовок протокола
-          pdfContainer.innerHTML = `
-            <div style="text-align: center; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 2px solid #3498db;">
+          // Добавляем заголовок ВРЕМЕННО в resultsElement для PDF
+          const tempHeader = document.createElement("div");
+          tempHeader.id = "temp-pdf-header";
+          tempHeader.innerHTML = `
+            <div style="text-align: center; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 2px solid #3498db; background: #f8f9fa; padding: 20px;">
               <h1 style="color: #2c3e50; font-size: 24px; margin-bottom: 10px;">Протокол диагностики</h1>
               <h2 style="color: #3498db; font-size: 18px;">Система СпектраМаяк</h2>
               <p style="color: #7f8c8d; font-size: 14px; margin-top: 10px;">
                 Дата: ${assessmentDate} | Ребёнок: ${childName}
               </p>
             </div>
-            ${resultsElement.innerHTML}
           `;
-          document.body.appendChild(pdfContainer);
+          resultsElement.insertBefore(tempHeader, resultsElement.firstChild);
 
-          // Генерируем и скачиваем PDF с использованием надежного метода
+          // Генерируем и скачиваем PDF ПРЯМО ИЗ resultsElement
           try {
-            // Сначала пробуем стандартный метод .save()
-            await html2pdf().set(opt).from(pdfContainer).save();
-            console.log("PDF файл успешно создан и скачан (метод .save())");
+            await html2pdf().set(opt).from(resultsElement).save();
+            console.log("PDF файл успешно создан и скачан");
           } catch (saveError) {
-            console.warn(
-              "Метод .save() не сработал, используем альтернативный метод:",
-              saveError.message,
-            );
+            console.warn("Метод .save() не сработал:", saveError.message);
 
-            // Альтернативный метод: генерируем PDF и создаём ссылку для скачивания
-            const pdfGenerator = html2pdf().set(opt).from(pdfContainer);
+            const pdfGenerator = html2pdf().set(opt).from(resultsElement);
             const pdfBlob = await pdfGenerator.output("blob");
             const url = URL.createObjectURL(pdfBlob);
 
-            // Создаём ссылку и кликаем на неё
             const link = document.createElement("a");
             link.href = url;
             link.download = fileName;
@@ -3351,19 +3330,19 @@
             document.body.appendChild(link);
             link.click();
 
-            // Очищаем
             setTimeout(() => {
               document.body.removeChild(link);
               URL.revokeObjectURL(url);
             }, 100);
 
-            console.log(
-              "PDF файл успешно создан и скачан (альтернативный метод)",
-            );
+            console.log("PDF файл создан и скачан (альтернативный метод)");
           }
 
-          // Удаляем временный контейнер
-          document.body.removeChild(pdfContainer);
+          // Удаляем временный заголовок
+          const headerToRemove = document.getElementById("temp-pdf-header");
+          if (headerToRemove) {
+            resultsElement.removeChild(headerToRemove);
+          }
           document.body.removeChild(loadingDiv);
 
           // Показываем сообщение об успехе
