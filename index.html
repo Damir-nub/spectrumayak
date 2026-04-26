@@ -1534,20 +1534,33 @@
         },
       };
 
-      // Объединяем все методики
-      const allMethods = [
-        ...methodsData.methods,
-        ...Object.values(additionalMethods),
-      ];
-
-      console.log("=== Загрузка данных ===");
-      console.log("methodsData.methods:", methodsData.methods.length);
-      console.log("additionalMethods:", Object.keys(additionalMethods).length);
-      console.log("Всего методик:", allMethods.length);
-
-      // Текущие ответы
+      // Объединяем все методики (отложенная инициализация)
+      let allMethods = [];
       let currentAnswers = {};
       let currentSection = 0;
+
+      // Проверка загрузки всех скриптов
+      function waitForScripts() {
+        if (typeof methodsData !== 'undefined' && typeof FullProtocolGenerator !== 'undefined') {
+          console.log("=== Все скрипты загружены ===");
+
+          // Объединяем все методики
+          allMethods = [
+            ...methodsData.methods,
+            ...Object.values(additionalMethods),
+          ];
+
+          console.log("methodsData.methods:", methodsData.methods.length);
+          console.log("additionalMethods:", Object.keys(additionalMethods).length);
+          console.log("Всего методик:", allMethods.length);
+
+          // Инициализация приложения
+          init();
+        } else {
+          console.log("Ожидание загрузки скриптов...");
+          setTimeout(waitForScripts, 100);
+        }
+      }
 
       // Инициализация
       function init() {
@@ -2977,8 +2990,8 @@
         }, 2000);
       }
 
-      // Запуск
-      document.addEventListener("DOMContentLoaded", init);
+      // Запуск (с ожиданием загрузки скриптов)
+      document.addEventListener("DOMContentLoaded", waitForScripts);
     </script>
   </body>
 </html>
