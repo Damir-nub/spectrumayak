@@ -1665,6 +1665,7 @@
                     <textarea class="form-input" id="childNotes" placeholder="Особенности развития, сопутствующие состояния..."></textarea>
                 </div>
                 <div class="button-container">
+                    <button class="btn btn-success" onclick="showResults()">📊 Показать результаты</button>
                     <button class="btn btn-primary" onclick="nextSection()">Далее →</button>
                 </div>
             `;
@@ -1738,6 +1739,7 @@
           html += `
                     <div class="button-container">
                         <button class="btn btn-secondary" onclick="prevSection()">← Назад</button>
+                        <button class="btn btn-success" onclick="showResults()">📊 Показать результаты</button>
                         <button class="btn btn-primary" onclick="nextSection()">Далее →</button>
                     </div>
                 `;
@@ -3326,10 +3328,40 @@
           pdfContainer.appendChild(contentClone);
           document.body.appendChild(pdfContainer);
 
-          // Генерируем и скачиваем PDF
-          await html2pdf().set(opt).from(pdfContainer).save();
+          // Генерируем и скачиваем PDF с использованием надежного метода
+          try {
+            // Сначала пробуем стандартный метод .save()
+            await html2pdf().set(opt).from(pdfContainer).save();
+            console.log("PDF файл успешно создан и скачан (метод .save())");
+          } catch (saveError) {
+            console.warn(
+              "Метод .save() не сработал, используем альтернативный метод:",
+              saveError.message,
+            );
 
-          console.log("PDF файл успешно создан и скачан");
+            // Альтернативный метод: генерируем PDF и создаём ссылку для скачивания
+            const pdfGenerator = html2pdf().set(opt).from(pdfContainer);
+            const pdfBlob = await pdfGenerator.output("blob");
+            const url = URL.createObjectURL(pdfBlob);
+
+            // Создаём ссылку и кликаем на неё
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = fileName;
+            link.style.display = "none";
+            document.body.appendChild(link);
+            link.click();
+
+            // Очищаем
+            setTimeout(() => {
+              document.body.removeChild(link);
+              URL.revokeObjectURL(url);
+            }, 100);
+
+            console.log(
+              "PDF файл успешно создан и скачан (альтернативный метод)",
+            );
+          }
 
           // Удаляем временный контейнер
           document.body.removeChild(pdfContainer);
