@@ -6,15 +6,18 @@
     <title>СпектраМаяк - Диагностика РАС</title>
 
     <!-- Подключение html2pdf.js для генерации PDF -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"
+      defer
+    ></script>
 
     <!-- Подключение данных методик -->
-    <script src="mchatr-test/methods-data.js"></script>
+    <script src="mchatr-test/methods-data.js" defer></script>
 
     <!-- Подключение генератора протоколов (полная версия) -->
-    <script src="mchatr-test/protocol-generator-complete.js"></script>
-    <script src="mchatr-test/scenarios-database.js"></script>
-    <script src="mchatr-test/full-protocol-generator.js"></script>
+    <script src="mchatr-test/protocol-generator-complete.js" defer></script>
+    <script src="mchatr-test/scenarios-database.js" defer></script>
+    <script src="mchatr-test/full-protocol-generator.js" defer></script>
 
     <style>
       * {
@@ -2991,7 +2994,8 @@
       }
 
       // Запуск (с ожиданием загрузки скриптов)
-      document.addEventListener("DOMContentLoaded", waitForScripts);
+      // Используем window.onload вместо DOMContentLoaded для гарантии загрузки всех скриптов
+      window.addEventListener('load', waitForScripts);
     </script>
   </body>
 </html>
