@@ -3298,15 +3298,22 @@
           `;
           document.body.appendChild(loadingDiv);
 
-          // Создаём временный контейнер для генерации PDF
+          // Создаём временный контейнер для генерации PDF (прямо на странице)
           const pdfContainer = document.createElement("div");
+          pdfContainer.id = "pdf-generating-container";
           pdfContainer.style.cssText = `
-            position: absolute;
-            left: -9999px;
-            top: 0;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             width: 794px;
+            max-height: 90vh;
+            overflow-y: auto;
             background: white;
             padding: 40px;
+            z-index: 10001;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            border-radius: 8px;
           `;
 
           // Добавляем заголовок протокола
