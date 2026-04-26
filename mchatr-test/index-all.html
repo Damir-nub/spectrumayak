@@ -11,6 +11,11 @@
     <!-- Подключение данных методик -->
     <script src="methods-data.js"></script>
 
+    <!-- Подключение генератора протоколов (полная версия) -->
+    <script src="protocol-generator-complete.js"></script>
+    <script src="scenarios-database.js"></script>
+    <script src="full-protocol-generator.js"></script>
+
     <style>
       * {
         margin: 0;
@@ -1590,8 +1595,13 @@
                     <input type="text" class="form-input" id="childName" placeholder="Иванов Иван Иванович">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Возраст</label>
-                    <input type="text" class="form-input" id="childAge" placeholder="3 года 6 месяцев">
+                    <label class="form-label">Возраст (текст)</label>
+                    <input type="text" class="form-input" id="childAgeText" placeholder="3 года 6 месяцев">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Возраст в месяцах (для фильтрации вопросов)</label>
+                    <input type="number" class="form-input" id="childAgeMonths" placeholder="42" min="0" max="240" value="42" onchange="filterQuestionsByAge()">
+                    <small style="color: #666; font-size: 0.9em;">Введите возраст ребёнка в полных месяцах. Это автоматически скроет вопросы, не соответствующие возрасту.</small>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Пол</label>
@@ -1635,13 +1645,18 @@
 
           method.questions.forEach((question, qIndex) => {
             const isCritical = question.critical || false;
+            const ageRange = question.ageRange || "all";
             html += `
-                        <div class="question ${isCritical ? "critical" : ""}">
+                        <div class="question ${isCritical ? "critical" : ""}"
+                             data-question-id="${question.num}"
+                             data-age-range="${ageRange}"
+                             id="question_${method.id}_${question.num}">
                             <div class="question-header">
                                 <div class="question-number">${question.num}</div>
                                 <div class="question-text">${question.text}</div>
                             </div>
                             ${question.hint ? `<div class="question-hint">${question.hint}</div>` : ""}
+                            ${ageRange !== "all" ? `<div style="font-size: 0.85em; color: #888; margin-bottom: 8px;">📍 Возраст: ${ageRange}</div>` : ""}
                             <div class="options">
                                 ${method.options
                                   .map(
@@ -1658,6 +1673,22 @@
                                 `,
                                   )
                                   .join("")}
+                                <label class="option-label" style="border-style: dashed; border-color: #999;">
+                                    <input type="radio"
+                                           name="method_${method.id}_q${question.num}"
+                                           value="custom"
+                                           data-method="${method.id}"
+                                           data-question="${question.num}"
+                                           onchange="toggleCustomAnswer('${method.id}', ${question.num}, true)">
+                                    <span>Свой вариант</span>
+                                </label>
+                            </div>
+                            <div id="custom_${method.id}_${question.num}" style="display: none; margin-top: 10px;">
+                                <input type="text"
+                                       class="form-input"
+                                       placeholder="Введите ваш ответ..."
+                                       onchange="saveCustomAnswer('${method.id}', ${question.num}, this.value)"
+                                       style="font-size: 0.95em;">
                             </div>
                         </div>
                     `;
@@ -1741,6 +1772,73 @@
         currentAnswers[methodId][questionNum] = value;
       }
 
+      // Переключить поле кастомного ответа
+      function toggleCustomAnswer(methodId, questionNum, show) {
+        const customDiv = document.getElementById(
+          `custom_${methodId}_${questionNum}`,
+        );
+        if (customDiv) {
+          customDiv.style.display = show ? "block" : "none";
+          if (show) {
+            customDiv.querySelector("input").focus();
+          }
+        }
+      }
+
+      // Сохранить кастомный ответ
+      function saveCustomAnswer(methodId, questionNum, value) {
+        if (!currentAnswers[methodId]) {
+          currentAnswers[methodId] = {};
+        }
+        currentAnswers[methodId][questionNum] = `custom: ${value}`;
+      }
+
+      // Фильтрация вопросов по возрасту
+      function filterQuestionsByAge() {
+        const ageMonths =
+          parseInt(document.getElementById("childAgeMonths")?.value) || 0;
+
+        if (ageMonths <= 0) return; // Не фильтруем, если возраст не указан
+
+        // Перебираем все вопросы
+        document
+          .querySelectorAll(".question[data-age-range]")
+          .forEach((question) => {
+            const ageRange = question.getAttribute("data-age-range");
+
+            if (ageRange && ageRange !== "all") {
+              // Парсим диапазон возраста (например, "16-30", "0-6м", "12-24м")
+              const match = ageRange.match(/(\d+)-(\d+)(м|mes|months)?/i);
+
+              if (match) {
+                const minAge = parseInt(match[1]);
+                const maxAge = parseInt(match[2]);
+
+                // Скрываем вопрос, если возраст ребёнка вне диапазона
+                if (ageMonths < minAge || ageMonths > maxAge) {
+                  question.style.display = "none";
+                } else {
+                  question.style.display = "block";
+                }
+              }
+            }
+          });
+
+        // Обновляем счетчики вопросов
+        document.querySelectorAll(".section-description").forEach((desc) => {
+          const section = desc.closest(".section");
+          if (section) {
+            const visibleQuestions = section.querySelectorAll(
+              '.question:not([style*="display: none"])',
+            );
+            const countText = desc.querySelector("strong:last-child");
+            if (countText && visibleQuestions.length > 0) {
+              countText.innerHTML = `Количество видимых вопросов: ${visibleQuestions.length}`;
+            }
+          }
+        });
+      }
+
       // Обновить прогресс
       function updateProgress() {
         const totalSections = allMethods.length + 2; // Инфо + методики + результаты
@@ -1759,11 +1857,16 @@
         let html = "";
 
         // Информация о ребёнке
+        const ageMonths =
+          document.getElementById("childAgeMonths")?.value || "Не указан";
+        const ageText =
+          document.getElementById("childAgeText")?.value || "Не указан";
+
         html += `
                 <div class="result-block">
                     <div class="result-title">Информация о ребёнке</div>
                     <p><strong>ФИО:</strong> ${document.getElementById("childName")?.value || "Не указано"}</p>
-                    <p><strong>Возраст:</strong> ${document.getElementById("childAge")?.value || "Не указан"}</p>
+                    <p><strong>Возраст:</strong> ${ageText} (${ageMonths} мес.)</p>
                     <p><strong>Пол:</strong> ${document.getElementById("childGender")?.value === "male" ? "Мужской" : document.getElementById("childGender")?.value === "female" ? "Женский" : "Не указан"}</p>
                     <p><strong>Диагноз:</strong> ${document.getElementById("childDiagnosis")?.value || "Не указан"}</p>
                     <p><strong>Дата обследования:</strong> ${document.getElementById("assessmentDate")?.value || "Не указана"}</p>
@@ -1786,6 +1889,9 @@
 
         // Интегрированная итоговая рекомендация
         html += generateIntegratedConclusion();
+
+        // Индивидуальный протокол
+        html += generateIndividualProtocol();
 
         resultsContent.innerHTML = html;
       }
@@ -2025,6 +2131,587 @@
         return html;
       }
 
+      // Генерация индивидуального протокола
+      function generateIndividualProtocol() {
+        // Собираем все данные
+        const assessmentData = {
+          childInfo: {
+            name: document.getElementById("childName")?.value || "",
+            ageMonths: document.getElementById("childAgeMonths")?.value || "0",
+            ageText: document.getElementById("childAgeText")?.value || "",
+            gender: document.getElementById("childGender")?.value || "",
+            diagnosis: document.getElementById("childDiagnosis")?.value || "",
+            date: document.getElementById("assessmentDate")?.value || "",
+            notes: document.getElementById("childNotes")?.value || ""
+          },
+          mchatrResults: calculateMethodScore(allMethods.find(m => m.id === 'mchatr')),
+          fastResults: calculateMethodScore(allMethods.find(m => m.id === 'fast')),
+          qabfResults: calculateMethodScore(allMethods.find(m => m.id === 'qabf')),
+          masResults: calculateMethodScore(allMethods.find(m => m.id === 'mas')),
+          scqResults: calculateMethodScore(allMethods.find(m => m.id === 'scq')),
+          sensoryProfile: calculateMethodScore(allMethods.find(m => m.id === 'sensory')),
+          developmentalMilestones: calculateMethodScore(allMethods.find(m => m.id === 'development')),
+          briefResults: calculateMethodScore(allMethods.find(m => m.id === 'brief')),
+          connersResults: calculateMethodScore(allMethods.find(m => m.id === 'conners'))
+        };
+
+        // Генерируем протокол (используем полный генератор)
+        const protocol = FullProtocolGenerator.generateFullProtocol(assessmentData);
+
+        // Формируем HTML
+        let html = `
+                <div class="result-block" style="border-left-color: #e74c3c; background: #fdf2f2;">
+                    <div class="result-title">📋 ИНДИВИДУАЛЬНЫЙ ПРОТОКОЛ ДЛЯ ${protocol.childInfo.name.toUpperCase()}</div>
+                    <div class="result-description">
+                        <strong>Возраст:</strong> ${protocol.childInfo.age.text} (${protocol.childInfo.age.months} мес.)<br>
+                        <strong>Пол:</strong> ${protocol.childInfo.gender === 'male' ? 'Мужской' : protocol.childInfo.gender === 'female' ? 'Женский' : 'Не указан'}<br>
+                        <strong>Диагноз:</strong> ${protocol.childInfo.diagnosis || 'Не установлен'}<br>
+                        <strong>Дата обследования:</strong> ${protocol.childInfo.assessmentDate}
+                    </div>
+                </div>
+        `;
+
+        // Режим дня
+        html += generateDailyScheduleSection(protocol.dailySchedule);
+
+        // Behaviour Intervention Plan
+        html += generateBehaviourPlanSection(protocol.behaviourPlan);
+
+        // Сенсорная диета
+        html += generateSensoryDietSection(protocol.sensoryDiet);
+
+        // План развития
+        html += generateDevelopmentalPlanSection(protocol.developmentalPlan);
+
+        // Ситуационные протоколы (НОВОЕ!)
+        html += generateSituationProtocolsSection(protocol.situationProtocols, protocol.childInfo.age);
+
+        // Экстренные протоколы
+        html += generateEmergencyProtocolsSection(protocol.emergencyProtocols);
+
+        return html;
+      }
+
+      // Секция режима дня
+      function generateDailyScheduleSection(schedule) {
+        let html = `
+                <div class="result-block" style="border-left-color: #3498db; background: #f0f8ff;">
+                    <div class="result-title">⏰ ИНДИВИДУАЛЬНЫЙ РЕЖИМ ДНЯ</div>
+                    <div class="result-description">
+        `;
+
+        // Сон
+        html += `<strong>😴 Сон:</strong><br>`;
+        html += `Ночной сон: ${schedule.sleep.night}<br>`;
+        if (schedule.sleep.naps && schedule.sleep.naps.length > 0) {
+          html += `Дневные сны: ${schedule.sleep.naps.join(', ')}<br>`;
+        }
+
+        if (schedule.sleep.preSleepRoutine) {
+          html += `<br><strong>Ритуал перед сном:</strong><br>`;
+          html += `<ul style="margin-left: 20px;">`;
+          schedule.sleep.preSleepRoutine.forEach(step => {
+            html += `<li>${step}</li>`;
+          });
+          html += `</ul>`;
+        }
+
+        // Питание
+        html += `<br><strong>🍽️ Питание:</strong> ${schedule.feeding.frequency}<br>`;
+        html += `Время: ${schedule.feeding.times.join(', ')}<br>`;
+
+        // Активности
+        html += `<br><strong>🎯 Утренние активности:</strong><br>`;
+        html += `<ul style="margin-left: 20px;">`;
+        schedule.activities.morning.forEach(activity => {
+          html += `<li>${activity}</li>`;
+        });
+        html += `</ul>`;
+
+        html += `<br><strong>🎯 Дневные активности:</strong><br>`;
+        html += `<ul style="margin-left: 20px;">`;
+        schedule.activities.afternoon.forEach(activity => {
+          html += `<li>${activity}</li>`;
+        });
+        html += `</ul>`;
+
+        html += `<br><strong>🎯 Вечерние активности:</strong><br>`;
+        html += `<ul style="margin-left: 20px;">`;
+        schedule.activities.evening.forEach(activity => {
+          html += `<li>${activity}</li>`;
+        });
+        html += `</ul>`;
+
+        // Дополнительные адаптации
+        if (schedule.sensoryBreaks) {
+          html += `<br><strong>🌟 Сенсорные перерывы:</strong><br>`;
+          html += `<ul style="margin-left: 20px;">`;
+          schedule.sensoryBreaks.forEach(break => {
+            html += `<li>${break}</li>`;
+          });
+          html += `</ul>`;
+        }
+
+        if (schedule.activityStructure) {
+          html += `<br><strong>📚 Структура занятий:</strong><br>`;
+          html += `<ul style="margin-left: 20px;">`;
+          schedule.activityStructure.forEach(struct => {
+            html += `<li>${struct}</li>`;
+          });
+          html += `</ul>`;
+        }
+
+        html += `
+                    </div>
+                </div>
+        `;
+
+        return html;
+      }
+
+      // Секция Behaviour Intervention Plan
+      function generateBehaviourPlanSection(plan) {
+        let html = `
+                <div class="result-block" style="border-left-color: #e67e22; background: #fef5e7;">
+                    <div class="result-title">🎯 BEHAVIOUR INTERVENTION PLAN</div>
+                    <div class="result-description">
+                        <strong>Функция поведения:</strong> ${plan.primaryFunction}<br><br>
+                        ${plan.description}
+                    </div>
+                </div>
+        `;
+
+        // Стратегии
+        html += `
+                <div class="result-block" style="border-left-color: #f39c12; background: #fffaf0;">
+                    <div class="result-title">💡 Стратегии управления поведением</div>
+                    <div class="result-description">
+                        <ul style="margin-left: 20px;">
+        `;
+        plan.strategies.forEach(strategy => {
+          html += `<li>${strategy}</li>`;
+        });
+        html += `
+                        </ul>
+                    </div>
+                </div>
+        `;
+
+        // Предупреждение (Antecedent)
+        html += `
+                <div class="result-block" style="border-left-color: #27ae60; background: #f0fff4;">
+                    <div class="result-title">⚠️ Предотвращение (Antecedent Strategies)</div>
+                    <div class="result-description">
+                        <ul style="margin-left: 20px;">
+        `;
+        plan.antecedentStrategies.forEach(strategy => {
+          html += `<li>${strategy}</li>`;
+        });
+        html += `
+                        </ul>
+                    </div>
+                </div>
+        `;
+
+        // Последствия (Consequence)
+        html += `
+                <div class="result-block" style="border-left-color: #8e44ad; background: #f5f0ff;">
+                    <div class="result-title">🔄 Последствия (Consequence Strategies)</div>
+                    <div class="result-description">
+                        <ul style="margin-left: 20px;">
+        `;
+        plan.consequenceStrategies.forEach(strategy => {
+          html += `<li>${strategy}</li>`;
+        });
+        html += `
+                        </ul>
+                    </div>
+                </div>
+        `;
+
+        // Замещающие поведения
+        html += `
+                <div class="result-block" style="border-left-color: #16a085; background: #f0ffff;">
+                    <div class="result-title">✅ Чему научить взамен (Replacement Behaviors)</div>
+                    <div class="result-description">
+                        <ul style="margin-left: 20px;">
+        `;
+        plan.replacementBehaviors.forEach(behavior => {
+          html += `<li>${behavior}</li>`;
+        });
+        html += `
+                        </ul>
+                    </div>
+                </div>
+        `;
+
+        // Экстренный план
+        html += `
+                <div class="result-block" style="border-left-color: #c0392b; background: #fff5f5;">
+                    <div class="result-title">🚨 Экстренный план</div>
+                    <div class="result-description">
+                        <strong>Протокол кризиса:</strong><br>
+                        <ol style="margin-left: 20px;">
+        `;
+        plan.emergencyPlan.crisisProtocol.forEach(step => {
+          html += `<li>${step}</li>`;
+        });
+        html += `
+                        </ol>
+                        <br><em>${plan.emergencyPlan.contactProfessional}</em>
+                    </div>
+                </div>
+        `;
+
+        return html;
+      }
+
+      // Секция сенсорной диеты
+      function generateSensoryDietSection(diet) {
+        if (diet.note) {
+          return `
+                <div class="result-block" style="border-left-color: #999; background: #f9f9f9;">
+                    <div class="result-title">🧠 СЕНСОРНАЯ ДИЕТА</div>
+                    <div class="result-description">${diet.note}</div>
+                </div>
+          `;
+        }
+
+        let html = `
+                <div class="result-block" style="border-left-color: #9b59b6; background: #faf5ff;">
+                    <div class="result-title">🧠 СЕНСОРНАЯ ДИЕТА</div>
+                    <div class="result-description">
+        `;
+
+        // Утренняя рутина
+        html += `<strong>🌅 Утренняя сенсорная рутина:</strong><br>`;
+        html += `<ul style="margin-left: 20px;">`;
+        diet.morningRoutine.forEach(item => {
+          html += `<li><strong>${item.time}</strong> - ${item.activity}: ${item.description}</li>`;
+        });
+        html += `</ul><br>`;
+
+        // В течение дня
+        html += `<strong>⏰ В течение дня:</strong><br>`;
+        html += `<ul style="margin-left: 20px;">`;
+        diet.throughoutDay.every2Hours.forEach(item => {
+          html += `<li>${item}</li>`;
+        });
+        html += `</ul><br>`;
+
+        // Вечерняя рутина
+        html += `<strong>🌙 Вечерняя сенсорная рутина:</strong><br>`;
+        html += `<ul style="margin-left: 20px;">`;
+        diet.eveningRoutine.forEach(item => {
+          html += `<li><strong>${item.time}</strong> - ${item.activity}: ${item.description}</li>`;
+        });
+        html += `</ul><br>`;
+
+        // Оборудование
+        if (diet.equipment && diet.equipment.length > 0) {
+          html += `<strong>🎒 Необходимое оборудование:</strong><br>`;
+          html += `<ul style="margin-left: 20px;">`;
+          diet.equipment.forEach(item => {
+            html += `<li>${item}</li>`;
+          });
+          html += `</ul>`;
+        }
+
+        html += `
+                    </div>
+                </div>
+        `;
+
+        return html;
+      }
+
+      // Секция плана развития
+      function generateDevelopmentalPlanSection(plan) {
+        if (!plan || !plan.prioritySkills || plan.prioritySkills.length === 0) {
+          return '';
+        }
+
+        let html = `
+                <div class="result-block" style="border-left-color: #16a085; background: #f0ffff;">
+                    <div class="result-title">📈 ПЛАН РАЗВИТИЯ НАВЫКОВ</div>
+                    <div class="result-description">
+        `;
+
+        // Приоритетные навыки
+        html += `<strong>Приоритетные навыки для работы:</strong><br><br>`;
+        plan.prioritySkills.forEach((skill, index) => {
+          html += `<strong>${index + 1}. ${skill.skill} (${skill.domain})</strong><br>`;
+          html += `${skill.description}<br>`;
+          html += `<em>Частота: ${skill.frequency}, Длительность: ${skill.duration}</em><br>`;
+          html += `<details style="margin-left: 20px; margin-top: 5px; margin-bottom: 10px;">`;
+          html += `<summary style="cursor: pointer; color: #667eea;">Показать упражнения</summary>`;
+          html += `<ol style="margin-top: 10px; margin-left: 20px;">`;
+          skill.exercises.forEach(exercise => {
+            html += `<li>${exercise}</li>`;
+          });
+          html += `</ol></details><br>`;
+        });
+
+        html += `
+                    </div>
+                </div>
+        `;
+
+        return html;
+      }
+
+      // Секция экстренных протоколов
+      function generateEmergencyProtocolsSection(protocols) {
+        if (!protocols || !protocols.screaming) {
+          return '';
+        }
+
+        let html = `
+                <div class="result-block" style="border-left-color: #c0392b; background: #fff5f5;">
+                    <div class="result-title">🚨 ЭКСТРЕННЫЕ ПРОТОКОЛЫ</div>
+                    <div class="result-description">
+                        <strong>КРИТИЧЕСКИ ВАЖНО:</strong> Распечатайте и сохраните эти протоколы в доступном месте.<br><br>
+        `;
+
+        // Протокол для криков
+        html += generateProtocolSection(protocols.screaming);
+
+        // Протокол для агрессии
+        html += generateProtocolSection(protocols.aggression);
+
+        // Протокол для самоущерба
+        html += generateProtocolSection(protocols.selfInjury);
+
+        // Протокол для мелтдаунов
+        html += generateProtocolSection(protocols.meltdown);
+
+        // Протокол для побегов
+        html += generateProtocolSection(protocols.elopement);
+
+        html += `
+                    </div>
+                </div>
+        `;
+
+        return html;
+      }
+
+      // Генерация секции для отдельного протокола
+      function generateProtocolSection(protocol) {
+        let html = `
+                    <details style="margin-bottom: 15px; border: 1px solid #e74c3c; border-radius: 8px; padding: 10px;">
+                        <summary style="cursor: pointer; font-weight: bold; color: #c0392b;">
+                            ${protocol.title}
+                        </summary>
+                        <div style="margin-top: 10px;">
+        `;
+
+        if (protocol.critical) {
+          html += `<strong style="color: #e74c3c;">⚠️ ${protocol.critical}</strong><br><br>`;
+        }
+
+        if (protocol.description) {
+          html += `${protocol.description}<br><br>`;
+        }
+
+        if (protocol.immediate) {
+          html += `<strong>🚨 Немедленные действия:</strong><br>`;
+          html += `<ol style="margin-left: 20px;">`;
+          protocol.immediate.forEach(step => {
+            html += `<li>${step}</li>`;
+          });
+          html += `</ol><br>`;
+        }
+
+        if (protocol.prolonged) {
+          html += `<strong>⏰ Если затянулось:</strong><br>`;
+          html += `<ul style="margin-left: 20px;">`;
+          protocol.prolonged.forEach(step => {
+            html += `<li>${step}</li>`;
+          });
+          html += `</ul><br>`;
+        }
+
+        if (protocol.after) {
+          html += `<strong>✅ После:</strong><br>`;
+          html += `<ul style="margin-left: 20px;">`;
+          protocol.after.forEach(step => {
+            html += `<li>${step}</li>`;
+          });
+          html += `</ul><br>`;
+        }
+
+        if (protocol.during) {
+          html += `<strong>⚡ Во время:</strong><br>`;
+          html += `<ul style="margin-left: 20px;">`;
+          protocol.during.forEach(step => {
+            html += `<li>${step}</li>`;
+          });
+          html += `</ul><br>`;
+        }
+
+        if (protocol.prevention) {
+          html += `<strong>🛡️ Профилактика:</strong><br>`;
+          html += `<ul style="margin-left: 20px;">`;
+          protocol.prevention.forEach(step => {
+            html += `<li>${step}</li>`;
+          });
+          html += `</ul><br>`;
+        }
+
+        if (protocol.protection) {
+          html += `<strong>🛡️ Защита:</strong><br>`;
+          html += `<ul style="margin-left: 20px;">`;
+          protocol.protection.forEach(step => {
+            html += `<li>${step}</li>`;
+          });
+          html += `</ul><br>`;
+        }
+
+        if (protocol.medical) {
+          html += `<strong>🏥 Медицинское вмешательство:</strong><br>`;
+          html += `<ul style="margin-left: 20px;">`;
+          protocol.medical.forEach(step => {
+            html += `<li>${step}</li>`;
+          });
+          html += `</ul><br>`;
+        }
+
+        if (protocol.early) {
+          html += `<strong>👀 Ранние признаки:</strong><br>`;
+          html += `<ul style="margin-left: 20px;">`;
+          protocol.early.forEach(step => {
+            html += `<li>${step}</li>`;
+          });
+          html += `</ul><br>`;
+        }
+
+        if (protocol.teaching) {
+          html += `<strong>📚 Обучение:</strong><br>`;
+          html += `<ul style="margin-left: 20px;">`;
+          protocol.teaching.forEach(step => {
+            html += `<li>${step}</li>`;
+          });
+          html += `</ul><br>`;
+        }
+
+        html += `
+                        </div>
+                    </details>
+        `;
+
+        return html;
+      }
+
+      // Секция ситуационных протоколов (НОВОЕ!)
+      function generateSituationProtocolsSection(protocols, ageInfo) {
+        if (!protocols || protocols.length === 0) {
+          return '';
+        }
+
+        const ageMonths = parseInt(ageInfo.months) || 0;
+        const ageGroup = _getAgeGroupText(ageMonths);
+
+        let html = `
+                <div class="result-block" style="border-left-color: #8e44ad; background: #f5f0ff;">
+                    <div class="result-title">📖 СИТУАЦИОННЫЕ ПРОТОКОЛЫ - ЧТО ДЕЛАТЬ И КАК ВЕСТИ</div>
+                    <div class="result-description">
+                        <strong>Возрастная группа:</strong> ${ageGroup}<br><br>
+                        <em>Ниже - конкретные инструкции что делать в различных ситуациях. Распечатайте и держите под рукой.</em><br><br>
+        `;
+
+        // Группируем протоколы по приоритету
+        const criticalProtocols = protocols.filter(p => p.priority === 'critical');
+        const highProtocols = protocols.filter(p => p.priority === 'high');
+        const mediumProtocols = protocols.filter(p => p.priority === 'medium');
+
+        // Критические протоколы
+        if (criticalProtocols.length > 0) {
+          html += `<strong>🚨 КРИТИЧЕСКИЕ СИТУАЦИИ (высокий приоритет):</strong><br><br>`;
+          criticalProtocols.forEach(protocol => {
+            html += generateSingleSituationProtocol(protocol);
+          });
+        }
+
+        // Высокий приоритет
+        if (highProtocols.length > 0) {
+          html += `<strong>⚠️ ВАЖНЫЕ СИТУАЦИИ:</strong><br><br>`;
+          highProtocols.forEach(protocol => {
+            html += generateSingleSituationProtocol(protocol);
+          });
+        }
+
+        // Средний приоритет
+        if (mediumProtocols.length > 0) {
+          html += `<strong>📋 СИТУАЦИИ СРЕДНЕГО ПРИОРИТЕТА:</strong><br><br>`;
+          mediumProtocols.forEach(protocol => {
+            html += generateSingleSituationProtocol(protocol);
+          });
+        }
+
+        html += `
+                    </div>
+                </div>
+        `;
+
+        return html;
+      }
+
+      // Генерация отдельного ситуационного протокола
+      function generateSingleSituationProtocol(protocol) {
+        let html = `
+                <details style="margin-bottom: 20px; border: 2px solid #8e44ad; border-radius: 10px; padding: 15px; background: white;" ${protocol.priority === 'critical' ? 'style="border-color: #e74c3c;"' : ''}>
+                    <summary style="cursor: pointer; font-weight: bold; font-size: 1.1em; color: #8e44ad;">
+                        ${protocol.priority === 'critical' ? '🚨' : '📋'} ${protocol.title}
+                    </summary>
+                    <div style="margin-top: 15px;">
+        `;
+
+        // Шаги
+        if (protocol.steps && protocol.steps.length > 0) {
+          html += `<strong>🎯 ЧТО ДЕЛАТЬ (пошагово):</strong><br>`;
+          html += `<ol style="margin-left: 20px; margin-top: 10px; margin-bottom: 15px;">`;
+          protocol.steps.forEach((step, index) => {
+            html += `<li><strong>Шаг ${index + 1}:</strong> ${step}</li>`;
+          });
+          html += `</ol><br>`;
+        }
+
+        // Что говорить
+        if (protocol.what_to_say && protocol.what_to_say.length > 0) {
+          html += `<strong>💬 ЧТО ГОВОРИТЬ:</strong><br>`;
+          html += `<div style="background: #e8f4f8; padding: 10px; border-radius: 5px; margin: 10px 0;">`;
+          protocol.what_to_say.forEach(phrase => {
+            html += `<div style="margin-bottom: 5px;">🗣️ "${phrase}"</div>`;
+          });
+          html += `</div><br>`;
+        }
+
+        // Чего НЕ делать
+        if (protocol.what_not_to_do && protocol.what_not_to_do.length > 0) {
+          html += `<strong>🚫 ЧЕГО НЕ ДЕЛАТЬ:</strong><br>`;
+          html += `<div style="background: #fff5f5; padding: 10px; border-radius: 5px; margin: 10px 0;">`;
+          protocol.what_not_to_do.forEach(notToDo => {
+            html += `<div style="margin-bottom: 5px;">⛔ ${notToDo}</div>`;
+          });
+          html += `</div><br>`;
+        }
+
+        html += `
+                    </div>
+                </details>
+        `;
+
+        return html;
+      }
+
+      // Определение возрастной группы для текста
+      function _getAgeGroupText(ageMonths) {
+        if (ageMonths < 24) return '1-2 года (малыш)';
+        if (ageMonths < 48) return '2-3 года (дошкольник)';
+        return '3-4 года (старший дошкольник)';
+      }
+
       // Детали для FBA (Functional Behavioral Assessment)
       function getFBADetails(funcName) {
         const details = {
@@ -2099,13 +2786,17 @@
           case "mchatr":
             // M-CHAT-R: Подсчёт "Нет" и критических вопросов
             const noAnswers = Object.values(answers).filter(
-              (a) => a === "no",
+              (a) =>
+                a === "no" || (typeof a === "string" && a.startsWith("custom")),
             ).length;
             const criticalQuestions = method.questions.filter(
               (q) => q.critical,
             );
             const criticalFail = criticalQuestions.filter(
-              (q) => answers[q.num] === "no",
+              (q) =>
+                answers[q.num] === "no" ||
+                (typeof answers[q.num] === "string" &&
+                  answers[q.num].startsWith("custom")),
             ).length;
 
             if (noAnswers >= 3 || criticalFail >= 2) {
@@ -2143,13 +2834,16 @@
               sensory: 0,
             };
             Object.entries(answers).forEach(([q, a]) => {
+              // Пропускаем кастомные ответы при анализе
+              if (typeof a === "string" && a.startsWith("custom")) return;
+
               const question = method.questions.find(
                 (q) => q.num === parseInt(q),
               );
               if (
                 question &&
                 question.func &&
-                (a === "yes" || a === "sometimes")
+                (a === "always" || a === "often" || a === "sometimes")
               ) {
                 funcCounts[question.func]++;
               }
@@ -2173,9 +2867,10 @@
             };
 
           case "scq":
-            // SCQ: Подсчёт "Нет"
+            // SCQ: Подсчёт "Нет" (кастомные ответы считаем как риск)
             const scqNoAnswers = Object.values(answers).filter(
-              (a) => a === "no",
+              (a) =>
+                a === "no" || (typeof a === "string" && a.startsWith("custom")),
             ).length;
             const scqPercent = (scqNoAnswers / total) * 100;
 
@@ -2207,12 +2902,15 @@
 
           default:
             // Общий подсчёт для остальных методик
+            // Кастомные ответы считаем как позитивные (указывающие на проблему)
             const positiveAnswers = Object.values(answers).filter(
               (a) =>
                 a === "yes" ||
                 a === "always" ||
                 a === "often" ||
-                a === "veryoften",
+                a === "veryoften" ||
+                a === "agree" ||
+                (typeof a === "string" && a.startsWith("custom")),
             ).length;
             const percent = (positiveAnswers / answered) * 100;
 
